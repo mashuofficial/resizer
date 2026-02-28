@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Image Resizer</title>
+    
+    <!-- PWA Settings for iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Resizer">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/180/007AFF/FFFFFF?text=R">
+
+    <!-- HEIC Support Library -->
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #F2F2F7;
+            --card-bg: #FFFFFF;
+            --text-color: #000000;
+            --secondary-text: #8E8E93;
+            --accent-color: #007AFF;
+            --danger-color: #FF3B30;
+            --border-color: #C6C6C8;
+            --input-bg: #E5E5EA;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #000000;
+            --card-bg: #1C1C1E;
+            --text-color: #FFFFFF;
+            --secondary-text: #98989D;
+            --accent-color: #0A84FF;
+            --danger-color: #FF453A;
+            --border-color: #38383A;
+            --input-bg: #2C2C2E;
+            --shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            padding-bottom: env(safe-area-inset-bottom);
+            transition: background-color 0.3s ease;
+            user-select: none;
+        }
+
+        /* Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(var(--card-bg), 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid var(--border-color);
+            padding: 12px 16px;
+            padding-top: max(12px, env(safe-area-inset-top));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 17px; margin: 0; font-weight: 600; }
+
+        .theme-toggle {
+            background: none; border: none; cursor: pointer;
+            color: var(--accent-color); font-size: 17px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Card Style */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease;
+        }
+
+        /* File Input Area */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        .upload-area.active { border-color: var(--accent-color); background: rgba(0,122,255,0.1); }
+        .upload-icon { font-size: 40px; margin-bottom: 10px; color: var(--accent-color); }
+        .upload-text { color: var(--secondary-text); font-size: 14px; }
+        #fileInput { display: none; }
+
+        /* Preview Image */
+        #previewContainer { display: none; text-align: center; }
+        #previewImage {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .image-info { font-size: 13px; color: var(--secondary-text); margin-bottom: 16px; }
+
+        /* Controls */
+        .control-group { margin-bottom: 16px; }
+        .control-label { font-size: 13px; color: var(--secondary-text); margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Width Input */
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        input[type="number"] {
+            width: 100%;
+            background: var(--input-bg);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 17px;
+            color: var(--text-color);
+            outline: none;
+            transition: var(--transition);
+        }
+        input[type="number"]:focus { box-shadow: 0 0 0 2px var(--accent-color); }
+        input[type="number"].error { color: var(--danger-color); box-shadow: 0 0 0 2px var(--danger-color); }
+        .unit { position: absolute; right: 12px; color: var(--secondary-text); }
+        .error-msg { color: var(--danger-color); font-size: 12px; margin-top: 6px; display: none; }
+
+        /* Presets */
+        .presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .preset-btn {
+            background: var(--input-bg);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 4px;
+            font-size: 12px;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .preset-btn:active { transform: scale(0.95); opacity: 0.7; }
+        .preset-btn.disabled { opacity: 0.3; pointer-events: none; }
+
+        /* Format Selector */
+        select {
+            width: 100%;
+            background: var(--input-bg);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 17px;
+            color: var(--text-color);
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        /* Action Button */
+        .action-btn {
+            width: 100%;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .action-btn:active { transform: scale(0.98); opacity: 0.9; }
+        .action-btn:disabled { background: var(--secondary-text); opacity: 0.5; cursor: not-allowed; }
+
+        /* Loader */
+        .spinner {
+            width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            background: rgba(50, 50, 50, 0.9); color: white;
+            padding: 12px 24px; border-radius: 24px;
+            font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: max-content;
+        }
+        .toast.show { opacity: 1; }
+
+        /* Animation classes */
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Resizer</h1>
+    <button class="theme-toggle" id="themeToggle">
+        <span id="themeIcon">🌙</span>
+    </button>
+</header>
+
+<div class="container">
+    <!-- Upload Section -->
+    <div class="card upload-area" id="dropZone">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">タップして画像を選択<br>またはファイルをドロップ</div>
+        <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp, image/heic, image/heif">
+    </div>
+
+    <!-- Edit Section -->
+    <div id="editorSection" class="hidden">
+        <div class="card fade-in">
+            <div id="previewContainer">
+                <img id="previewImage" src="" alt="Preview">
+                <div class="image-info" id="imageInfo">Original: 0 x 0</div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">横幅 (Width)</label>
+                <div class="input-wrapper">
+                    <input type="number" id="widthInput" placeholder="px">
+                    <span class="unit">px</span>
+                </div>
+                <div class="error-msg" id="widthError">元のサイズより大きい値は指定できません</div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">プリセット</label>
+                <div class="presets">
+                    <button class="preset-btn" data-width="320">320</button>
+                    <button class="preset-btn" data-width="640">640</button>
+                    <button class="preset-btn" data-width="1280">1280</button>
+                    <button class="preset-btn" data-width="1920">1920</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">書き出し形式</label>
+                <select id="formatSelect">
+                    <option value="image/jpeg">JPEG (推奨)</option>
+                    <option value="image/png">PNG</option>
+                    <option value="image/webp">WebP</option>
+                </select>
+            </div>
+
+            <button class="action-btn" id="exportBtn">
+                <div class="spinner" id="btnSpinner"></div>
+                <span id="btnText">書き出して共有</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Message</div>
+
+<script>
+    // --- Elements ---
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const editorSection = document.getElementById('editorSection');
+    const previewImage = document.getElementById('previewImage');
+    const imageInfo = document.getElementById('imageInfo');
+    const widthInput = document.getElementById('widthInput');
+    const widthError = document.getElementById('widthError');
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    const exportBtn = document.getElementById('exportBtn');
+    const formatSelect = document.getElementById('formatSelect');
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const btnText = document.getElementById('btnText');
+    const toast = document.getElementById('toast');
+
+    // --- State ---
+    let originalImage = null;
+    let originalWidth = 0;
+    let originalHeight = 0;
+    let fileName = "";
+
+    // --- Theme Logic ---
+    function initTheme() {
+        const isDark = localStorage.getItem('theme') === 'dark' || 
+                       (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        themeIcon.textContent = isDark ? '☀️' : '🌙';
+    }
+    themeToggle.addEventListener('click', () => {
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        themeIcon.textContent = isDark ? '🌙' : '☀️';
+    });
+    initTheme();
+
+    // --- File Handling ---
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('active');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    async function handleFile(file) {
+        const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
+        
+        // Check extension simply
+        const ext = file.name.split('.').pop().toLowerCase();
+        
+        // HEIC Support Check
+        if (ext === 'heic' || ext === 'heif' || file.type === 'image/heic' || file.type === 'image/heif') {
+            showToast("HEIC画像を変換中...");
+            try {
+                const blob = await heic2any({ blob: file, toType: "image/jpeg" });
+                const convertedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+                loadFile(convertedFile);
+            } catch (e) {
+                showToast("HEICの読み込みに失敗しました");
+            }
+            return;
+        }
+
+        if (!validTypes.some(type => file.type === type) && !['png','jpg','jpeg','gif','webp'].includes(ext)) {
+            showToast("このファイルは使用できません");
+            return;
+        }
+
+        loadFile(file);
+    }
+
+    function loadFile(file) {
+        fileName = file.name.split('.')[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            originalImage = new Image();
+            originalImage.onload = () => {
+                originalWidth = originalImage.width;
+                originalHeight = originalImage.height;
+                
+                // UI Update
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+                imageInfo.textContent = `Original: ${originalWidth}px × ${originalHeight}px`;
+                widthInput.value = originalWidth; // Default to original
+                
+                updatePresetsState();
+                validateInput();
+                
+                editorSection.classList.remove('hidden');
+                // Scroll to editor
+                setTimeout(() => editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+            };
+            originalImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // --- Validation & Presets ---
+    widthInput.addEventListener('input', validateInput);
+
+    function validateInput() {
+        const val = parseInt(widthInput.value, 10);
+        if (!val) return;
+
+        if (val > originalWidth) {
+            widthInput.classList.add('error');
+            widthError.style.display = 'block';
+            exportBtn.disabled = true;
+        } else {
+            widthInput.classList.remove('error');
+            widthError.style.display = 'none';
+            exportBtn.disabled = false;
+        }
+    }
+
+    function updatePresetsState() {
+        presetBtns.forEach(btn => {
+            const presetWidth = parseInt(btn.dataset.width, 10);
+            if (presetWidth > originalWidth) {
+                btn.classList.add('disabled');
+            } else {
+                btn.classList.remove('disabled');
+            }
+        });
+    }
+
+    presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            widthInput.value = btn.dataset.width;
+            validateInput();
+            // Animation feedback
+            btn.style.transform = "scale(0.9)";
+            setTimeout(() => btn.style.transform = "scale(1)", 150);
+        });
+    });
+
+    // --- Export Logic ---
+    exportBtn.addEventListener('click', async () => {
+        if (exportBtn.disabled) return;
+        
+        const targetWidth = parseInt(widthInput.value, 10);
+        if (!targetWidth || targetWidth <= 0) return;
+
+        setLoading(true);
+
+        // Wait a bit for UI to update
+        setTimeout(async () => {
+            try {
+                const canvas = document.createElement('canvas');
+                const scaleFactor = targetWidth / originalWidth;
+                const targetHeight = originalHeight * scaleFactor;
+
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                const ctx = canvas.getContext('2d');
+                
+                // Better quality smoothing
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(originalImage, 0, 0, targetWidth, targetHeight);
+
+                const format = formatSelect.value; // image/jpeg, etc
+                const extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+                const outExt = extMap[format];
+                
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        showToast("書き出しエラー");
+                        setLoading(false);
+                        return;
+                    }
+
+                    const outFileName = `${fileName}_resized.${outExt}`;
+                    const file = new File([blob], outFileName, { type: format });
+
+                    // Share API (iOS/Mobile)
+                    if (navigator.share && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: 'リサイズされた画像',
+                                text: `${targetWidth}pxにリサイズしました`
+                            });
+                        } catch (err) {
+                            if (err.name !== 'AbortError') showToast("共有に失敗しました");
+                        }
+                    } else {
+                        // PC Fallback
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = outFileName;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        showToast("画像をダウンロードしました");
+                    }
+                    setLoading(false);
+                }, format, 0.92); // 0.92 quality for jpg/webp
+
+            } catch (e) {
+                console.error(e);
+                showToast("エラーが発生しました");
+                setLoading(false);
+            }
+        }, 100);
+    });
+
+    // --- Helpers ---
+    function setLoading(isLoading) {
+        if (isLoading) {
+            btnSpinner.style.display = 'block';
+            btnText.style.display = 'none';
+            exportBtn.disabled = true;
+        } else {
+            btnSpinner.style.display = 'none';
+            btnText.style.display = 'inline';
+            exportBtn.disabled = false;
+        }
+    }
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+</script>
+
+</body>
+</html>
