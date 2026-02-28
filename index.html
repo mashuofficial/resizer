@@ -17,20 +17,22 @@
 
     <style>
         :root {
-            /* Light Mode: Pure White */
+            /* Light Mode: Ultra White Theme */
             --bg-color: #FFFFFF;
-            --surface-color: #FAFAFA; /* Slightly off-white for contrast elements */
+            --surface-color: #FFFFFF; /* Pure white */
             --sheet-bg: rgba(255, 255, 255, 0.98);
             --text-color: #000000;
             --secondary-text: #8E8E93;
             --accent-color: #007AFF;
             --danger-color: #FF3B30;
             --border-color: #E5E5EA;
-            --input-bg: #F2F2F7;
+            --input-bg: #F5F5F7; /* Very light gray */
+            --input-border: #E5E5EA;
             --active-border: #000000;
-            --shadow: 0 -4px 20px rgba(0,0,0,0.08);
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
             --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --transition-speed: 0.3s;
+            --bezier: cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         [data-theme="dark"] {
@@ -43,6 +45,7 @@
             --danger-color: #FF453A;
             --border-color: #38383A;
             --input-bg: #2C2C2E;
+            --input-border: #38383A;
             --active-border: #FFFFFF;
             --shadow: 0 -4px 20px rgba(0,0,0,0.4);
         }
@@ -60,8 +63,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            /* Synchronize transitions */
-            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+            transition: background-color var(--transition-speed) ease;
         }
 
         /* Header */
@@ -80,7 +82,6 @@
         .theme-toggle {
             background: none; border: none; cursor: pointer;
             color: var(--text-color); font-size: 18px; padding: 8px;
-            transition: color var(--transition-speed) ease;
         }
 
         /* Views Container */
@@ -92,48 +93,74 @@
             overflow: hidden;
         }
 
-        /* Upload View */
-        #uploadView {
+        /* --- View Transitions --- */
+        .view {
             position: absolute;
             inset: 0;
+            transition: opacity 0.4s var(--bezier), transform 0.4s var(--bezier);
+            will-change: opacity, transform;
+        }
+
+        /* Upload View Styles */
+        #uploadView {
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            transition: opacity 0.3s ease;
             z-index: 10;
-            /* Visual centering adjustment */
-            padding-bottom: 100px; 
+            padding-bottom: 100px;
         }
+        /* Fade out and scale down when hiding */
+        #uploadView.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+        /* Normal state */
+        #uploadView.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
         .upload-area {
             width: 100%;
             max-width: 400px;
             border: 2px dashed var(--border-color);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 60px 20px;
             text-align: center;
             background: var(--surface-color);
             cursor: pointer;
-            transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+            transition: border-color 0.2s, background-color 0.2s;
         }
-        .upload-area.active { border-color: var(--accent-color); background: rgba(0,122,255,0.05); }
+        .upload-area:active, .upload-area.hover { 
+            border-color: var(--accent-color); 
+            background: rgba(0,122,255,0.03); 
+        }
         .upload-icon { font-size: 48px; margin-bottom: 16px; color: var(--accent-color); }
         .upload-text { color: var(--secondary-text); font-size: 15px; font-weight: 500; }
         #fileInput { display: none; }
 
-        /* Editor View */
+        /* Editor View Styles */
         #editorView {
-            position: absolute;
-            inset: 0;
             display: flex;
             flex-direction: column;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
             z-index: 20;
             background: var(--bg-color);
         }
-        #editorView.visible { opacity: 1; pointer-events: auto; }
+        /* Slide down when hidden */
+        #editorView.hidden {
+            opacity: 0;
+            transform: translateY(100%);
+            pointer-events: none;
+        }
+        /* Slide up when active */
+        #editorView.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
 
         /* Image Preview Area */
         .preview-area {
@@ -145,14 +172,13 @@
             padding: 20px;
             overflow: hidden;
             position: relative;
-            transition: background-color var(--transition-speed) ease;
         }
         #previewImage {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
             cursor: zoom-in;
             transition: transform 0.2s;
         }
@@ -162,15 +188,16 @@
             position: absolute;
             top: 10px;
             background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             color: white;
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-size: 12px;
-            font-weight: 500;
+            font-weight: 600;
             pointer-events: none;
             z-index: 5;
+            letter-spacing: 0.5px;
         }
 
         /* Controls Sheet */
@@ -179,67 +206,166 @@
             background: var(--sheet-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
             box-shadow: var(--shadow);
-            padding: 24px 20px max(20px, env(safe-area-inset-bottom)) 20px;
+            padding: 24px 24px max(24px, env(safe-area-inset-bottom)) 24px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            max-height: 75%;
+            gap: 20px;
+            max-height: 80%;
             overflow-y: auto;
             border-top: 1px solid var(--border-color);
-            transition: background-color var(--transition-speed) ease;
         }
 
         /* Inputs */
-        .row { display: flex; gap: 12px; align-items: center; }
+        .row { display: flex; gap: 16px; align-items: center; }
         .col { flex: 1; min-width: 0; }
-        .label { font-size: 11px; color: var(--secondary-text); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; display: block; }
+        .label { 
+            font-size: 11px; color: var(--secondary-text); 
+            margin-bottom: 8px; text-transform: uppercase; 
+            font-weight: 600; display: block; letter-spacing: 0.5px;
+        }
         
         .input-group { position: relative; display: flex; align-items: center; }
         input[type="number"] {
             width: 100%;
             background: var(--input-bg);
-            border: none;
-            border-radius: 8px;
-            padding: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            padding: 12px;
             font-size: 16px;
             color: var(--text-color);
             text-align: center;
             outline: none;
-            transition: background-color var(--transition-speed) ease;
+            transition: all 0.2s;
         }
-        input[type="number"]:focus { box-shadow: 0 0 0 2px var(--accent-color); }
-        input[type="number"].error { color: var(--danger-color); box-shadow: 0 0 0 2px var(--danger-color); }
-        .unit { position: absolute; right: 8px; font-size: 12px; color: var(--secondary-text); pointer-events: none; }
+        input[type="number"]:focus { 
+            border-color: var(--accent-color); 
+            background: var(--bg-color);
+            box-shadow: 0 0 0 2px rgba(0,122,255,0.1); 
+        }
+        input[type="number"].error { 
+            color: var(--danger-color); 
+            border-color: var(--danger-color); 
+            box-shadow: 0 0 0 2px rgba(255,59,48,0.1);
+        }
+        .unit { position: absolute; right: 12px; font-size: 12px; color: var(--secondary-text); pointer-events: none; }
+
+        /* Custom Select Box */
+        .select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        select {
+            width: 100%;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            padding: 12px;
+            padding-right: 36px; /* Space for arrow */
+            font-size: 15px;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        select:focus {
+            border-color: var(--accent-color);
+            background-color: var(--bg-color);
+        }
+        /* Dropdown options background (best effort) */
+        option {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 10px;
+        }
+        /* Custom Arrow */
+        .select-arrow {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-text);
+            pointer-events: none;
+            font-size: 12px;
+        }
+
+        /* Checkbox */
+        .checkbox-wrapper {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 14px; color: var(--text-color); cursor: pointer;
+            width: fit-content;
+            user-select: none;
+        }
+        
+        /* Custom Checkbox Design */
+        .checkbox-custom {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--secondary-text);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: var(--bg-color);
+        }
+        .checkbox-custom i {
+            color: white;
+            font-size: 12px;
+            transform: scale(0);
+            transition: transform 0.2s;
+        }
+        /* Hidden real checkbox */
+        input[type="checkbox"] { display: none; }
+        
+        input[type="checkbox"]:checked + .checkbox-custom {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        input[type="checkbox"]:checked + .checkbox-custom i {
+            transform: scale(1);
+        }
 
         /* Presets */
         .presets-container {
-            display: flex; gap: 8px; overflow-x: auto; 
-            padding-bottom: 4px;
+            display: flex; gap: 10px; overflow-x: auto; 
+            padding-bottom: 2px;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
         }
         .presets-container::-webkit-scrollbar { display: none; }
         .preset-btn {
             background: var(--input-bg);
-            border: 2px solid transparent; /* Prepare for border */
-            border-radius: 8px;
-            padding: 8px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            padding: 10px 14px;
             font-size: 13px;
+            font-weight: 500;
             color: var(--text-color);
             white-space: nowrap;
             flex-shrink: 0;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .preset-btn.disabled { opacity: 0.3; pointer-events: none; }
-        .preset-btn.active { border-color: var(--active-border); font-weight: 600; }
-        .preset-btn:active { transform: scale(0.95); }
+        .preset-btn.disabled { opacity: 0.3; pointer-events: none; border-style: dashed; }
+        .preset-btn.active { 
+            border: 2px solid var(--active-border); 
+            background: var(--bg-color);
+            font-weight: 700;
+            transform: translateY(-1px);
+        }
+        .preset-btn:active { transform: scale(0.96); }
 
         /* Estimate */
-        .estimate { text-align: right; font-size: 12px; color: var(--secondary-text); margin-top: -4px; width: 100%; white-space: nowrap; }
+        .estimate { 
+            text-align: right; font-size: 12px; color: var(--secondary-text); 
+            margin-top: -4px; width: 100%; white-space: nowrap; 
+            font-variant-numeric: tabular-nums;
+        }
 
         /* Buttons */
         .action-btn {
@@ -247,106 +373,35 @@
             background: var(--accent-color);
             color: white;
             border: none;
-            border-radius: 12px;
-            padding: 14px;
+            border-radius: 14px;
+            padding: 16px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 8px;
-            transition: opacity 0.2s;
+            gap: 10px;
+            transition: opacity 0.2s, transform 0.1s;
         }
         .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .action-btn:active { opacity: 0.8; }
+        .action-btn:active { transform: scale(0.98); opacity: 0.9; }
         
         .reset-btn {
             background: transparent;
             color: var(--danger-color);
             border: none;
-            padding: 10px;
+            padding: 12px;
             font-size: 14px;
             width: 100%;
             cursor: pointer;
+            font-weight: 500;
         }
-
-        /* --- Custom Inputs for Desktop/Mouse (Hover supported devices) --- */
-        
-        /* Select styling */
-        select {
-            width: 100%;
-            background: var(--input-bg);
-            border: none;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 14px;
-            color: var(--text-color);
-            appearance: none; /* Remove default arrow for customization */
-            -webkit-appearance: none;
-            transition: background-color var(--transition-speed) ease;
-        }
-
-        /* Add custom arrow for PC/Hover devices */
-        @media (hover: hover) and (pointer: fine) {
-            select {
-                background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238E8E93%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-                background-repeat: no-repeat;
-                background-position: right 10px center;
-                background-size: 10px;
-                padding-right: 30px;
-                cursor: pointer;
-            }
-
-            /* Custom Checkbox for PC */
-            .checkbox-wrapper {
-                display: flex; align-items: center; gap: 8px;
-                font-size: 14px; color: var(--text-color); cursor: pointer;
-                width: fit-content;
-            }
-            .checkbox-wrapper input[type="checkbox"] {
-                appearance: none;
-                -webkit-appearance: none;
-                width: 18px;
-                height: 18px;
-                border: 2px solid var(--secondary-text);
-                border-radius: 4px;
-                position: relative;
-                margin: 0;
-                transition: all 0.2s;
-            }
-            .checkbox-wrapper input[type="checkbox"]:checked {
-                background-color: var(--accent-color);
-                border-color: var(--accent-color);
-            }
-            .checkbox-wrapper input[type="checkbox"]:checked::after {
-                content: '';
-                position: absolute;
-                left: 5px;
-                top: 1px;
-                width: 4px;
-                height: 9px;
-                border: solid white;
-                border-width: 0 2px 2px 0;
-                transform: rotate(45deg);
-            }
-        }
-
-        /* Mobile default fallback (Use native controls) */
-        @media (hover: none) {
-            .checkbox-wrapper {
-                display: flex; align-items: center; gap: 8px;
-                font-size: 14px; color: var(--text-color); cursor: pointer;
-                width: fit-content;
-            }
-            input[type="checkbox"] { accent-color: var(--accent-color); width: 18px; height: 18px; margin: 0; }
-        }
-
 
         /* Modal */
         .modal {
             position: fixed; inset: 0;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 100;
             display: flex; justify-content: center; align-items: center;
             opacity: 0; pointer-events: none;
@@ -360,14 +415,14 @@
         }
         .close-modal {
             position: absolute; top: 20px; right: 20px;
-            color: white; font-size: 30px; background: none; border: none;
-            cursor: pointer; padding: 10px;
-            z-index: 101;
+            color: white; font-size: 24px; background: rgba(50,50,50,0.5); border: none;
+            border-radius: 50%; width: 40px; height: 40px;
+            cursor: pointer; z-index: 101; display: flex; align-items: center; justify-content: center;
         }
 
         /* Spinner & Toast */
         .spinner {
-            width: 18px; height: 18px;
+            width: 20px; height: 20px;
             border: 2px solid rgba(255,255,255,0.3);
             border-top-color: #fff;
             border-radius: 50%;
@@ -396,7 +451,7 @@
 
 <div class="main-container">
     <!-- Upload View -->
-    <div id="uploadView">
+    <div id="uploadView" class="view active">
         <div class="card upload-area" id="dropZone">
             <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
             <div class="upload-text">画像を選択</div>
@@ -405,7 +460,7 @@
     </div>
 
     <!-- Editor View (Overlay) -->
-    <div id="editorView">
+    <div id="editorView" class="view hidden">
         <div class="preview-area">
             <img id="previewImage" src="" alt="">
             <div class="file-info-overlay" id="fileInfoOverlay">Loading...</div>
@@ -433,6 +488,7 @@
             <!-- Aspect Ratio Checkbox -->
             <label class="checkbox-wrapper">
                 <input type="checkbox" id="aspectRatioCheck" checked>
+                <div class="checkbox-custom"><i class="fa-solid fa-check"></i></div>
                 <span>縦横比を維持</span>
             </label>
 
@@ -451,11 +507,14 @@
             <div class="row">
                 <div class="col">
                     <label class="label">拡張子</label>
-                    <select id="formatSelect">
-                        <option value="image/jpeg">JPG</option>
-                        <option value="image/png">PNG</option>
-                        <option value="image/webp">WebP</option>
-                    </select>
+                    <div class="select-wrapper">
+                        <select id="formatSelect">
+                            <option value="image/jpeg">JPG</option>
+                            <option value="image/png">PNG</option>
+                            <option value="image/webp">WebP</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-arrow"></i>
+                    </div>
                 </div>
                 <div class="col" style="display:flex; align-items:flex-end;">
                      <div class="estimate" id="estimateSize">約 ---.- B</div>
@@ -478,7 +537,7 @@
 
 <!-- Modal -->
 <div class="modal" id="imageModal">
-    <button class="close-modal" id="closeModal">&times;</button>
+    <button class="close-modal" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
     <img id="modalImage" src="" alt="">
 </div>
 
@@ -540,14 +599,42 @@
     });
     initTheme();
 
+    // --- View Switching (Animation) ---
+    function showEditor() {
+        uploadView.classList.remove('active');
+        uploadView.classList.add('hidden');
+        
+        // Slight delay to allow upload view to fade out nicely before sliding up
+        setTimeout(() => {
+            editorView.classList.remove('hidden');
+            editorView.classList.add('active');
+        }, 100);
+    }
+
+    function showUpload() {
+        editorView.classList.remove('active');
+        editorView.classList.add('hidden');
+
+        // Wait for slide down to finish before showing upload
+        setTimeout(() => {
+            uploadView.classList.remove('hidden');
+            uploadView.classList.add('active');
+            
+            // Clean up state
+            fileInput.value = '';
+            originalImage = null;
+            previewImage.src = '';
+        }, 300);
+    }
+
     // --- File Input ---
     dropZone.addEventListener('click', () => fileInput.click());
     
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('hover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
     
     dropZone.addEventListener('drop', (e) => {
-        e.preventDefault(); dropZone.classList.remove('active');
+        e.preventDefault(); dropZone.classList.remove('hover');
         if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
     fileInput.addEventListener('change', (e) => {
@@ -600,11 +687,10 @@
                 heightInput.value = originalH;
                 
                 updatePresetsState();
-                validate(); // 初期検証を実行
+                validate(); // Init validation
 
-                // Switch View
-                uploadView.style.display = 'none';
-                editorView.classList.add('visible');
+                // Trigger Animation
+                showEditor();
             };
             originalImage.src = e.target.result;
         };
@@ -637,20 +723,19 @@
 
     aspectRatioCheck.addEventListener('change', () => {
         if (aspectRatioCheck.checked && widthInput.value) {
-            // Re-align height to current width
             heightInput.value = Math.round(widthInput.value / aspectRatio);
             validate();
         }
     });
 
-    formatSelect.addEventListener('change', updateEstimate);
+    formatSelect.addEventListener('change', () => updateEstimate(false));
 
     function validate() {
         const w = parseInt(widthInput.value) || 0;
         const h = parseInt(heightInput.value) || 0;
         let hasError = false;
 
-        // Validation: Cannot exceed original dimensions
+        // Validation
         if (w > originalW) {
             widthInput.classList.add('error');
             hasError = true;
@@ -709,8 +794,8 @@
         });
     }
 
-    // --- Estimate Size ---
-    function updateEstimate(hasError = false) {
+    // --- Estimate Size (Updated Logic) ---
+    function updateEstimate(hasError) {
         if (hasError) {
             estimateSize.textContent = "約 ---.- B";
             return;
@@ -723,16 +808,18 @@
             return;
         }
         
-        // Slightly improved rough estimation factors (bytes per pixel)
-        // This is still an approximation as compression varies by content complexity.
-        let bpp = 0.25; // Default JPEG High ~0.25
+        // Revised Estimation Factors (Bytes per pixel)
+        // JPEG (92%): ~0.25
+        // PNG (Photo/Complex): ~0.9
+        // WebP (92%): ~0.2
+        let bpp = 0.25; 
         
         if (formatSelect.value === 'image/png') {
-            bpp = 0.6; // PNG varies wildly (0.5 - 3.0), but 0.6 is a safer average for photos
+            bpp = 0.9; 
         } else if (formatSelect.value === 'image/webp') {
-            bpp = 0.15; // WebP is very efficient
+            bpp = 0.2; 
         } else if (formatSelect.value === 'image/jpeg') {
-            bpp = 0.20; 
+            bpp = 0.25; 
         }
         
         const estBytes = w * h * bpp;
@@ -750,16 +837,8 @@
         if (e.target === modal) modal.classList.remove('open');
     });
 
-
     // --- Reset ---
-    resetBtn.addEventListener('click', () => {
-        editorView.classList.remove('visible');
-        setTimeout(() => {
-            uploadView.style.display = 'flex';
-            fileInput.value = '';
-            originalImage = null;
-        }, 300);
-    });
+    resetBtn.addEventListener('click', showUpload);
 
     // --- Convert & Output ---
     convertBtn.addEventListener('click', async () => {
