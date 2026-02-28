@@ -3,42 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Image Resizer</title>
+    <title>Resizer</title>
     
-    <!-- PWA Settings for iOS -->
+    <!-- PWA Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Resizer">
     <link rel="apple-touch-icon" href="https://via.placeholder.com/180/007AFF/FFFFFF?text=R">
 
-    <!-- HEIC Support Library -->
+    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
-            --bg-color: #F2F2F7;
-            --card-bg: #FFFFFF;
+            /* Light Mode (Whiter) */
+            --bg-color: #FFFFFF;
+            --surface-color: #F2F2F7;
+            --sheet-bg: rgba(255, 255, 255, 0.95);
             --text-color: #000000;
             --secondary-text: #8E8E93;
             --accent-color: #007AFF;
             --danger-color: #FF3B30;
-            --border-color: #C6C6C8;
-            --input-bg: #E5E5EA;
-            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --border-color: #E5E5EA;
+            --input-bg: #F2F2F7;
+            --shadow: 0 -4px 16px rgba(0,0,0,0.1);
             --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            --transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
         [data-theme="dark"] {
             --bg-color: #000000;
-            --card-bg: #1C1C1E;
+            --surface-color: #1C1C1E;
+            --sheet-bg: rgba(28, 28, 30, 0.95);
             --text-color: #FFFFFF;
             --secondary-text: #98989D;
             --accent-color: #0A84FF;
             --danger-color: #FF453A;
             --border-color: #38383A;
             --input-bg: #2C2C2E;
-            --shadow: 0 4px 12px rgba(0,0,0,0.3);
+            --shadow: 0 -4px 16px rgba(0,0,0,0.4);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -49,173 +52,237 @@
             color: var(--text-color);
             margin: 0;
             padding: 0;
-            padding-bottom: env(safe-area-inset-bottom);
+            height: 100vh;
+            height: 100dvh; /* Dynamic Viewport Height */
+            overflow: hidden; /* Prevent body scroll */
+            display: flex;
+            flex-direction: column;
             transition: background-color 0.3s ease;
-            user-select: none;
         }
 
         /* Header */
         header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(var(--card-bg), 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 0.5px solid var(--border-color);
-            padding: 12px 16px;
-            padding-top: max(12px, env(safe-area-inset-top));
+            flex: 0 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 12px 20px;
+            padding-top: max(12px, env(safe-area-inset-top));
+            background: var(--bg-color);
+            z-index: 10;
         }
-
-        h1 { font-size: 17px; margin: 0; font-weight: 600; }
-
+        h1 { font-size: 18px; margin: 0; font-weight: 700; }
         .theme-toggle {
             background: none; border: none; cursor: pointer;
-            color: var(--accent-color); font-size: 17px;
+            color: var(--text-color); font-size: 18px; padding: 8px;
         }
 
-        /* Main Container */
-        .container {
-            max-width: 640px;
-            margin: 0 auto;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* Card Style */
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: var(--shadow);
-            transition: transform 0.2s ease;
-        }
-
-        /* File Input Area */
-        .upload-area {
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
+        /* Views Container */
+        .main-container {
             position: relative;
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
-        .upload-area.active { border-color: var(--accent-color); background: rgba(0,122,255,0.1); }
-        .upload-icon { font-size: 40px; margin-bottom: 10px; color: var(--accent-color); }
-        .upload-text { color: var(--secondary-text); font-size: 14px; }
+
+        /* Upload View (Center) */
+        #uploadView {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: opacity 0.3s ease;
+        }
+        .upload-area {
+            width: 100%;
+            max-width: 400px;
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 60px 20px;
+            text-align: center;
+            background: var(--surface-color);
+            cursor: pointer;
+        }
+        .upload-area.active { border-color: var(--accent-color); background: rgba(0,122,255,0.05); }
+        .upload-icon { font-size: 48px; margin-bottom: 16px; color: var(--accent-color); }
+        .upload-text { color: var(--secondary-text); font-size: 15px; font-weight: 500; }
         #fileInput { display: none; }
 
-        /* Preview Image */
-        #previewContainer { display: none; text-align: center; }
+        /* Editor View */
+        #editorView {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #editorView.visible { opacity: 1; pointer-events: auto; }
+
+        /* Image Preview Area (Top) */
+        .preview-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-color); /* Matches body */
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
         #previewImage {
             max-width: 100%;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .image-info { font-size: 13px; color: var(--secondary-text); margin-bottom: 16px; }
+        .file-info-overlay {
+            position: absolute;
+            top: 10px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
 
-        /* Controls */
-        .control-group { margin-bottom: 16px; }
-        .control-label { font-size: 13px; color: var(--secondary-text); margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+        /* Controls Sheet (Bottom) */
+        .controls-sheet {
+            flex: 0 0 auto; /* Don't grow, size by content */
+            background: var(--sheet-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px 20px max(20px, env(safe-area-inset-bottom)) 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: 70%; /* Occupy max 70% of screen */
+            overflow-y: auto; /* Scroll internally if content is too tall */
+            border-top: 1px solid var(--border-color);
+        }
 
-        /* Width Input */
-        .input-wrapper { position: relative; display: flex; align-items: center; }
+        /* Input Rows */
+        .row { display: flex; gap: 12px; align-items: center; }
+        .col { flex: 1; min-width: 0; }
+        .label { font-size: 11px; color: var(--secondary-text); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; display: block; }
+        
+        /* Inputs */
+        .input-group { position: relative; display: flex; align-items: center; }
         input[type="number"] {
             width: 100%;
             background: var(--input-bg);
             border: none;
-            border-radius: 10px;
-            padding: 12px;
-            font-size: 17px;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
             color: var(--text-color);
+            text-align: center;
             outline: none;
-            transition: var(--transition);
         }
         input[type="number"]:focus { box-shadow: 0 0 0 2px var(--accent-color); }
         input[type="number"].error { color: var(--danger-color); box-shadow: 0 0 0 2px var(--danger-color); }
-        .unit { position: absolute; right: 12px; color: var(--secondary-text); }
-        .error-msg { color: var(--danger-color); font-size: 12px; margin-top: 6px; display: none; }
+        .unit { position: absolute; right: 8px; font-size: 12px; color: var(--secondary-text); pointer-events: none; }
+
+        /* Checkbox */
+        .checkbox-wrapper {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; color: var(--text-color); cursor: pointer;
+        }
+        input[type="checkbox"] { accent-color: var(--accent-color); width: 18px; height: 18px; }
 
         /* Presets */
-        .presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .presets-container {
+            display: flex; gap: 8px; overflow-x: auto; 
+            padding-bottom: 4px; /* Scrollbar space */
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .presets-container::-webkit-scrollbar { display: none; }
         .preset-btn {
             background: var(--input-bg);
             border: none;
             border-radius: 8px;
-            padding: 8px 4px;
-            font-size: 12px;
+            padding: 8px 12px;
+            font-size: 13px;
             color: var(--text-color);
+            white-space: nowrap;
+            flex-shrink: 0;
             cursor: pointer;
-            transition: var(--transition);
         }
-        .preset-btn:active { transform: scale(0.95); opacity: 0.7; }
         .preset-btn.disabled { opacity: 0.3; pointer-events: none; }
+        .preset-btn:active { background: var(--border-color); }
 
-        /* Format Selector */
-        select {
-            width: 100%;
-            background: var(--input-bg);
-            border: none;
-            border-radius: 10px;
-            padding: 12px;
-            font-size: 17px;
-            color: var(--text-color);
-            appearance: none;
-            -webkit-appearance: none;
-        }
+        /* Estimate */
+        .estimate { text-align: center; font-size: 12px; color: var(--secondary-text); margin-top: -4px; }
 
-        /* Action Button */
+        /* Buttons */
         .action-btn {
             width: 100%;
             background: var(--accent-color);
             color: white;
             border: none;
             border-radius: 12px;
-            padding: 16px;
-            font-size: 17px;
+            padding: 14px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: var(--transition);
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 8px;
         }
-        .action-btn:active { transform: scale(0.98); opacity: 0.9; }
-        .action-btn:disabled { background: var(--secondary-text); opacity: 0.5; cursor: not-allowed; }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .reset-btn {
+            background: transparent;
+            color: var(--danger-color);
+            border: none;
+            padding: 10px;
+            font-size: 14px;
+            width: 100%;
+            cursor: pointer;
+        }
 
-        /* Loader */
+        /* Format Select */
+        select {
+            width: 100%;
+            background: var(--input-bg);
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        /* Spinner & Toast */
         .spinner {
-            width: 20px; height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
+            width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
             border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
             display: none;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Toast */
         .toast {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            background: rgba(50, 50, 50, 0.9); color: white;
-            padding: 12px 24px; border-radius: 24px;
-            font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(30, 30, 30, 0.9); color: white;
+            padding: 10px 20px; border-radius: 20px; font-size: 13px;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
             z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: max-content;
         }
         .toast.show { opacity: 1; }
-
-        /* Animation classes */
-        .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.4s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     </style>
 </head>
@@ -223,58 +290,86 @@
 
 <header>
     <h1>Resizer</h1>
-    <button class="theme-toggle" id="themeToggle">
-        <span id="themeIcon">🌙</span>
-    </button>
+    <button class="theme-toggle" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
 </header>
 
-<div class="container">
-    <!-- Upload Section -->
-    <div class="card upload-area" id="dropZone">
-        <div class="upload-icon">📷</div>
-        <div class="upload-text">タップして画像を選択<br>またはファイルをドロップ</div>
-        <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp, image/heic, image/heif">
+<div class="main-container">
+    <!-- Upload View -->
+    <div id="uploadView">
+        <div class="card upload-area" id="dropZone">
+            <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <div class="upload-text">画像を選択</div>
+            <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp, image/heic, image/heif">
+        </div>
     </div>
 
-    <!-- Edit Section -->
-    <div id="editorSection" class="hidden">
-        <div class="card fade-in">
-            <div id="previewContainer">
-                <img id="previewImage" src="" alt="Preview">
-                <div class="image-info" id="imageInfo">Original: 0 x 0</div>
-            </div>
+    <!-- Editor View (Overlay) -->
+    <div id="editorView">
+        <div class="preview-area">
+            <img id="previewImage" src="" alt="">
+            <div class="file-info-overlay" id="fileInfoOverlay">Loading...</div>
+        </div>
 
-            <div class="control-group">
-                <label class="control-label">横幅 (Width)</label>
-                <div class="input-wrapper">
-                    <input type="number" id="widthInput" placeholder="px">
-                    <span class="unit">px</span>
+        <div class="controls-sheet">
+            <!-- Dimensions -->
+            <div class="row">
+                <div class="col">
+                    <label class="label">横幅 (Width)</label>
+                    <div class="input-group">
+                        <input type="number" id="widthInput">
+                        <span class="unit">px</span>
+                    </div>
                 </div>
-                <div class="error-msg" id="widthError">元のサイズより大きい値は指定できません</div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">プリセット</label>
-                <div class="presets">
-                    <button class="preset-btn" data-width="320">320</button>
-                    <button class="preset-btn" data-width="640">640</button>
-                    <button class="preset-btn" data-width="1280">1280</button>
-                    <button class="preset-btn" data-width="1920">1920</button>
+                <div class="col">
+                    <label class="label">高さ (Height)</label>
+                    <div class="input-group">
+                        <input type="number" id="heightInput">
+                        <span class="unit">px</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="control-group">
-                <label class="control-label">書き出し形式</label>
-                <select id="formatSelect">
-                    <option value="image/jpeg">JPEG (推奨)</option>
-                    <option value="image/png">PNG</option>
-                    <option value="image/webp">WebP</option>
-                </select>
+            <!-- Aspect Ratio Checkbox -->
+            <label class="checkbox-wrapper">
+                <input type="checkbox" id="aspectRatioCheck" checked>
+                <span>縦横比を維持</span>
+            </label>
+
+            <!-- Presets -->
+            <div>
+                <label class="label">プリセット (横幅)</label>
+                <div class="presets-container" id="presetContainer">
+                    <button class="preset-btn" data-w="320">320px</button>
+                    <button class="preset-btn" data-w="640">640px</button>
+                    <button class="preset-btn" data-w="1280">1280px</button>
+                    <button class="preset-btn" data-w="1920">1920px</button>
+                </div>
             </div>
 
-            <button class="action-btn" id="exportBtn">
+            <!-- Format -->
+            <div class="row">
+                <div class="col">
+                    <label class="label">拡張子</label>
+                    <select id="formatSelect">
+                        <option value="image/jpeg">JPG</option>
+                        <option value="image/png">PNG</option>
+                        <option value="image/webp">WebP</option>
+                    </select>
+                </div>
+                <div class="col" style="display:flex; align-items:flex-end;">
+                     <div class="estimate" id="estimateSize">推定: ---</div>
+                </div>
+            </div>
+
+            <!-- Main Button -->
+            <button class="action-btn" id="convertBtn">
                 <div class="spinner" id="btnSpinner"></div>
-                <span id="btnText">書き出して共有</span>
+                <span id="btnText"><i class="fa-solid fa-wand-magic-sparkles"></i> 変換</span>
+            </button>
+            
+            <!-- Reset Button -->
+            <button class="reset-btn" id="resetBtn">
+                <i class="fa-solid fa-arrow-rotate-left"></i> 画像を変更
             </button>
         </div>
     </div>
@@ -286,48 +381,59 @@
     // --- Elements ---
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
-    const editorSection = document.getElementById('editorSection');
+    const uploadView = document.getElementById('uploadView');
+    const editorView = document.getElementById('editorView');
     const previewImage = document.getElementById('previewImage');
-    const imageInfo = document.getElementById('imageInfo');
+    const fileInfoOverlay = document.getElementById('fileInfoOverlay');
+    
     const widthInput = document.getElementById('widthInput');
-    const widthError = document.getElementById('widthError');
+    const heightInput = document.getElementById('heightInput');
+    const aspectRatioCheck = document.getElementById('aspectRatioCheck');
     const presetBtns = document.querySelectorAll('.preset-btn');
-    const exportBtn = document.getElementById('exportBtn');
     const formatSelect = document.getElementById('formatSelect');
-    const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
+    
+    const convertBtn = document.getElementById('convertBtn');
     const btnSpinner = document.getElementById('btnSpinner');
     const btnText = document.getElementById('btnText');
+    const resetBtn = document.getElementById('resetBtn');
+    const estimateSize = document.getElementById('estimateSize');
     const toast = document.getElementById('toast');
+    const themeToggle = document.getElementById('themeToggle');
 
     // --- State ---
     let originalImage = null;
-    let originalWidth = 0;
-    let originalHeight = 0;
-    let fileName = "";
+    let originalW = 0;
+    let originalH = 0;
+    let originalFile = null;
+    let originalSizeStr = "";
+    let aspectRatio = 0;
+
+    // --- Device Detection ---
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     // --- Theme Logic ---
     function initTheme() {
         const isDark = localStorage.getItem('theme') === 'dark' || 
                        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        setTheme(isDark);
+    }
+    function setTheme(isDark) {
         document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        themeIcon.textContent = isDark ? '☀️' : '🌙';
+        themeToggle.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
     }
     themeToggle.addEventListener('click', () => {
-        const isDark = document.body.getAttribute('data-theme') === 'dark';
-        document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        localStorage.setItem('theme', isDark ? 'light' : 'dark');
-        themeIcon.textContent = isDark ? '🌙' : '☀️';
+        const isCurrentDark = document.body.getAttribute('data-theme') === 'dark';
+        setTheme(!isCurrentDark);
     });
     initTheme();
 
-    // --- File Handling ---
+    // --- File Input ---
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'););
     dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('active');
+        e.preventDefault(); dropZone.classList.remove('active');
         if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
     fileInput.addEventListener('change', (e) => {
@@ -336,80 +442,133 @@
 
     async function handleFile(file) {
         const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
-        
-        // Check extension simply
         const ext = file.name.split('.').pop().toLowerCase();
         
-        // HEIC Support Check
+        // HEIC conversion
         if (ext === 'heic' || ext === 'heif' || file.type === 'image/heic' || file.type === 'image/heif') {
-            showToast("HEIC画像を変換中...");
+            showToast("HEICを変換中...");
             try {
                 const blob = await heic2any({ blob: file, toType: "image/jpeg" });
                 const convertedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
                 loadFile(convertedFile);
             } catch (e) {
-                showToast("HEICの読み込みに失敗しました");
+                showToast("HEIC読み込み失敗");
             }
             return;
         }
 
-        if (!validTypes.some(type => file.type === type) && !['png','jpg','jpeg','gif','webp'].includes(ext)) {
+        if (!validTypes.some(t => file.type === t) && !['png','jpg','jpeg','gif','webp'].includes(ext)) {
             showToast("このファイルは使用できません");
             return;
         }
-
         loadFile(file);
     }
 
     function loadFile(file) {
-        fileName = file.name.split('.')[0];
+        originalFile = file;
+        originalSizeStr = formatBytes(file.size);
         const reader = new FileReader();
         reader.onload = (e) => {
             originalImage = new Image();
             originalImage.onload = () => {
-                originalWidth = originalImage.width;
-                originalHeight = originalImage.height;
-                
-                // UI Update
+                originalW = originalImage.width;
+                originalH = originalImage.height;
+                aspectRatio = originalW / originalH;
+
+                // UI Setup
                 previewImage.src = e.target.result;
-                previewContainer.style.display = 'block';
-                imageInfo.textContent = `Original: ${originalWidth}px × ${originalHeight}px`;
-                widthInput.value = originalWidth; // Default to original
+                fileInfoOverlay.textContent = `${originalW}×${originalH} | ${originalSizeStr}`;
+                
+                // Initialize Inputs
+                widthInput.value = originalW;
+                heightInput.value = originalH;
                 
                 updatePresetsState();
-                validateInput();
-                
-                editorSection.classList.remove('hidden');
-                // Scroll to editor
-                setTimeout(() => editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                updateEstimate();
+
+                // Switch View
+                uploadView.style.display = 'none';
+                editorView.classList.add('visible');
             };
             originalImage.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
 
-    // --- Validation & Presets ---
-    widthInput.addEventListener('input', validateInput);
+    // --- Format Bytes ---
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
 
-    function validateInput() {
-        const val = parseInt(widthInput.value, 10);
-        if (!val) return;
+    // --- Inputs Logic ---
+    widthInput.addEventListener('input', () => {
+        if (aspectRatioCheck.checked && widthInput.value) {
+            heightInput.value = Math.round(widthInput.value / aspectRatio);
+        }
+        validate();
+    });
 
-        if (val > originalWidth) {
+    heightInput.addEventListener('input', () => {
+        if (aspectRatioCheck.checked && heightInput.value) {
+            widthInput.value = Math.round(heightInput.value * aspectRatio);
+        }
+        validate();
+    });
+
+    aspectRatioCheck.addEventListener('change', () => {
+        if (aspectRatioCheck.checked) {
+            // Re-align height to current width
+            heightInput.value = Math.round(widthInput.value / aspectRatio);
+            validate();
+        }
+    });
+
+    formatSelect.addEventListener('change', updateEstimate);
+
+    function validate() {
+        const w = parseInt(widthInput.value) || 0;
+        const h = parseInt(heightInput.value) || 0;
+        let hasError = false;
+
+        // Validation: Cannot exceed original dimensions
+        if (w > originalW) {
             widthInput.classList.add('error');
-            widthError.style.display = 'block';
-            exportBtn.disabled = true;
+            hasError = true;
         } else {
             widthInput.classList.remove('error');
-            widthError.style.display = 'none';
-            exportBtn.disabled = false;
         }
+
+        if (h > originalH) {
+            heightInput.classList.add('error');
+            hasError = true;
+        } else {
+            heightInput.classList.remove('error');
+        }
+
+        convertBtn.disabled = hasError || w <= 0 || h <= 0;
+        updateEstimate();
     }
+
+    // --- Presets ---
+    presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetW = parseInt(btn.dataset.w);
+            widthInput.value = targetW;
+            if (aspectRatioCheck.checked) {
+                heightInput.value = Math.round(targetW / aspectRatio);
+            }
+            validate();
+        });
+    });
 
     function updatePresetsState() {
         presetBtns.forEach(btn => {
-            const presetWidth = parseInt(btn.dataset.width, 10);
-            if (presetWidth > originalWidth) {
+            const targetW = parseInt(btn.dataset.w);
+            if (targetW > originalW) {
                 btn.classList.add('disabled');
             } else {
                 btn.classList.remove('disabled');
@@ -417,99 +576,107 @@
         });
     }
 
-    presetBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            widthInput.value = btn.dataset.width;
-            validateInput();
-            // Animation feedback
-            btn.style.transform = "scale(0.9)";
-            setTimeout(() => btn.style.transform = "scale(1)", 150);
-        });
+    // --- Estimate Size ---
+    function updateEstimate() {
+        const w = parseInt(widthInput.value) || 0;
+        const h = parseInt(heightInput.value) || 0;
+        if (w <= 0 || h <= 0) {
+            estimateSize.textContent = "推定: ---";
+            return;
+        }
+        
+        // Rough estimation
+        // JPEG/WebP ~ 0.2 to 0.8 bytes per pixel depending on quality (assuming high quality here)
+        // PNG ~ 2-3 bytes per pixel if complex, less if simple.
+        let factor = 0.5; 
+        if (formatSelect.value === 'image/png') factor = 2.0;
+        else if (formatSelect.value === 'image/webp') factor = 0.4;
+        
+        const estBytes = w * h * factor;
+        estimateSize.textContent = `推定: 約${formatBytes(estBytes)}`;
+    }
+
+    // --- Reset ---
+    resetBtn.addEventListener('click', () => {
+        editorView.classList.remove('visible');
+        setTimeout(() => {
+            uploadView.style.display = 'flex';
+            fileInput.value = '';
+            originalImage = null;
+        }, 300);
     });
 
-    // --- Export Logic ---
-    exportBtn.addEventListener('click', async () => {
-        if (exportBtn.disabled) return;
-        
-        const targetWidth = parseInt(widthInput.value, 10);
-        if (!targetWidth || targetWidth <= 0) return;
-
+    // --- Convert & Output ---
+    convertBtn.addEventListener('click', async () => {
+        if (convertBtn.disabled) return;
         setLoading(true);
 
-        // Wait a bit for UI to update
-        setTimeout(async () => {
-            try {
-                const canvas = document.createElement('canvas');
-                const scaleFactor = targetWidth / originalWidth;
-                const targetHeight = originalHeight * scaleFactor;
+        setTimeout(() => {
+            const w = parseInt(widthInput.value);
+            const h = parseInt(heightInput.value);
+            const format = formatSelect.value;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(originalImage, 0, 0, w, h);
 
-                canvas.width = targetWidth;
-                canvas.height = targetHeight;
-                const ctx = canvas.getContext('2d');
-                
-                // Better quality smoothing
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(originalImage, 0, 0, targetWidth, targetHeight);
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    showToast("エラー発生");
+                    setLoading(false);
+                    return;
+                }
 
-                const format = formatSelect.value; // image/jpeg, etc
+                // Filename Generation: name_WxH.ext
                 const extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
                 const outExt = extMap[format];
+                const originalBase = originalFile.name.substring(0, originalFile.name.lastIndexOf('.')) || originalFile.name;
+                const fileName = `${originalBase}_${w}x${h}.${outExt}`;
                 
-                canvas.toBlob(async (blob) => {
-                    if (!blob) {
-                        showToast("書き出しエラー");
-                        setLoading(false);
-                        return;
+                const file = new File([blob], fileName, { type: format });
+
+                if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
+                    // Mobile: Share Sheet
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'リサイズ画像',
+                        });
+                    } catch (err) {
+                        // ignore abort
                     }
-
-                    const outFileName = `${fileName}_resized.${outExt}`;
-                    const file = new File([blob], outFileName, { type: format });
-
-                    // Share API (iOS/Mobile)
-                    if (navigator.share && navigator.canShare({ files: [file] })) {
-                        try {
-                            await navigator.share({
-                                files: [file],
-                                title: 'リサイズされた画像',
-                                text: `${targetWidth}pxにリサイズしました`
-                            });
-                        } catch (err) {
-                            if (err.name !== 'AbortError') showToast("共有に失敗しました");
-                        }
-                    } else {
-                        // PC Fallback
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = outFileName;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                        showToast("画像をダウンロードしました");
-                    }
-                    setLoading(false);
-                }, format, 0.92); // 0.92 quality for jpg/webp
-
-            } catch (e) {
-                console.error(e);
-                showToast("エラーが発生しました");
+                } else {
+                    // Desktop/Other: Download
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showToast("ダウンロードしました");
+                }
                 setLoading(false);
-            }
+
+            }, format, 0.92);
+
         }, 100);
     });
 
-    // --- Helpers ---
     function setLoading(isLoading) {
         if (isLoading) {
             btnSpinner.style.display = 'block';
-            btnText.style.display = 'none';
-            exportBtn.disabled = true;
+            document.querySelector('#btnText .fa-wand-magic-sparkles').style.display = 'none';
+            convertBtn.disabled = true;
         } else {
             btnSpinner.style.display = 'none';
-            btnText.style.display = 'inline';
-            exportBtn.disabled = false;
+            document.querySelector('#btnText .fa-wand-magic-sparkles').style.display = 'inline-block';
+            convertBtn.disabled = false;
         }
     }
 
