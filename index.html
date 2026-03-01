@@ -70,10 +70,12 @@
             padding: 0;
             height: 100vh;
             height: 100dvh;
-            overflow: hidden;
+            overflow: hidden; /* Prevent body scroll entirely */
             display: flex;
             flex-direction: column;
             transition: background-color var(--transition-speed) ease;
+            text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
         }
 
         /* --- App Frame (Wrapper) --- */
@@ -90,12 +92,10 @@
 
         /* 
            PC/Tablet Specific Styles 
-           画面幅が広い場合、アスペクト比を維持して中央表示する設定
         */
         @media (min-width: 541px) {
             body {
                 background-color: var(--pc-body-bg);
-                /* Center the app frame */
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -103,27 +103,21 @@
 
             #app-frame {
                 /* 
-                   アスペクト比を固定 (iPhoneに近い 9:19.5) 
-                   これにより、縦幅が縮めば横幅も自動で縮み、常にスマホ形状を保ちます。
+                   アスペクト比を少し横長に調整 (9:17) 
+                   以前より幅広になり、窮屈さが解消されます。
                 */
-                aspect-ratio: 9 / 19.5;
+                aspect-ratio: 9 / 17;
 
-                /* 画面の高さの95%を使い、可能な限り大きく表示 */
-                height: 95dvh;
+                /* 画面高さに対して適度な大きさを確保しつつ、はみ出さないように */
+                height: 90dvh;
+                max-height: 1000px; /* 大きくなりすぎないように */
+                min-height: 600px; /* 小さくなりすぎないように */
                 
-                /* 幅は高さのアスペクト比に従って自動計算 */
                 width: auto;
-
-                /* ただし、横幅が画面を超えないように制限 */
-                max-width: 95vw;
+                max-width: 90vw; /* 横幅も画面内に収める */
                 
-                /* 影をつけて浮き上がらせる */
                 box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-
-                /* 角丸にする */
-                border-radius: 24px;
-                
-                /* 枠線（ライトモードで見やすくするため） */
+                border-radius: 24px; /* 角丸復活 */
                 border: 1px solid rgba(0,0,0,0.05);
             }
         }
@@ -270,8 +264,8 @@
             padding: 24px 24px max(24px, env(safe-area-inset-bottom)) 24px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            /* 画面が小さい時でもスクロールできるように */
+            gap: 16px;
+            /* スクロールしなくてもいいように高さを確保しつつ、必要な場合のみスクロール */
             max-height: 70%;
             overflow-y: auto;
             border-top: 1px solid var(--border-color);
@@ -293,7 +287,7 @@
             border: 1px solid var(--input-border);
             border-radius: 10px;
             padding: 12px;
-            font-size: 16px;
+            font-size: 16px; /* Fixed size */
             color: var(--text-color);
             text-align: center;
             outline: none;
@@ -324,7 +318,7 @@
             border-radius: 10px;
             padding: 12px;
             padding-right: 36px;
-            font-size: 15px;
+            font-size: 15px; /* Fixed size */
             appearance: none;
             -webkit-appearance: none;
             outline: none;
@@ -371,26 +365,28 @@
         }
         input[type="checkbox"]:checked + .checkbox-custom i { transform: scale(1); }
 
-        /* Presets */
+        /* Presets (修正: 折り返し表示) */
         .presets-container {
-            display: flex; gap: 10px; overflow-x: auto; 
-            padding-bottom: 2px;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
+            display: flex; 
+            gap: 10px; 
+            /* overflow-x: auto;  <- これを削除 */
+            flex-wrap: wrap; /* 折り返しを有効化 */
+            justify-content: space-between;
         }
-        .presets-container::-webkit-scrollbar { display: none; }
+        
         .preset-btn {
             background: var(--input-bg);
             border: 1px solid var(--input-border);
             border-radius: 10px;
-            padding: 10px 14px;
+            padding: 10px 4px;
             font-size: 13px;
             font-weight: 500;
             color: var(--text-color);
             white-space: nowrap;
-            flex-shrink: 0;
             cursor: pointer;
             transition: all 0.2s;
+            flex: 1 1 20%; /* 幅を調整して均等に並べる */
+            text-align: center;
         }
         .preset-btn.disabled { opacity: 0.3; pointer-events: none; border-style: dashed; }
         .preset-btn.active { 
@@ -453,7 +449,7 @@
             max-width: 95%; max-height: 95%;
             object-fit: contain;
             user-select: none;
-            border-radius: 4px; /* Optional for modal img */
+            border-radius: 4px;
         }
         .close-modal {
             position: absolute; top: 20px; right: 20px;
