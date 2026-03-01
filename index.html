@@ -9,7 +9,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Resizer">
-    <!-- Icon updated -->
     <link rel="apple-touch-icon" href="icon_512x512.jpg">
     <link rel="icon" href="icon_512x512.jpg">
 
@@ -19,22 +18,25 @@
 
     <style>
         :root {
-            /* Light Mode: Ultra White Theme */
+            /* Light Mode */
             --bg-color: #FFFFFF;
-            --surface-color: #FFFFFF; /* Pure white */
+            --surface-color: #FFFFFF;
             --sheet-bg: rgba(255, 255, 255, 0.98);
             --text-color: #000000;
             --secondary-text: #8E8E93;
             --accent-color: #007AFF;
             --danger-color: #FF3B30;
             --border-color: #E5E5EA;
-            --input-bg: #F5F5F7; /* Very light gray */
+            --input-bg: #F5F5F7;
             --input-border: #E5E5EA;
             --active-border: #000000;
             --shadow: 0 4px 20px rgba(0,0,0,0.08);
             --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --transition-speed: 0.3s;
             --bezier: cubic-bezier(0.25, 1, 0.5, 1);
+            
+            /* Body Background for PC View */
+            --pc-body-bg: #F0F0F0;
         }
 
         [data-theme="dark"] {
@@ -50,13 +52,16 @@
             --input-border: #38383A;
             --active-border: #FFFFFF;
             --shadow: 0 -4px 20px rgba(0,0,0,0.4);
+
+            /* Body Background for PC View */
+            --pc-body-bg: #121212;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
             font-family: var(--font-stack);
-            background-color: var(--bg-color);
+            background-color: var(--pc-body-bg); /* PC background */
             color: var(--text-color);
             margin: 0;
             padding: 0;
@@ -64,8 +69,37 @@
             height: 100dvh;
             overflow: hidden;
             display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        /* --- App Frame (Mobile Wrapper) --- */
+        #app-frame {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            display: flex;
             flex-direction: column;
             transition: background-color var(--transition-speed) ease;
+        }
+
+        /* PC/Tablet Specific Styles */
+        @media (min-width: 481px) {
+            #app-frame {
+                max-width: 420px; /* Mobile width */
+                max-height: 920px; /* Prevent too tall on large screens */
+                height: 100%;
+                /* Optional: Add border radius or shadow to look like a phone */
+                box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+            }
+            
+            /* Center vertically if height is constrained */
+            body {
+                height: 100vh;
+            }
         }
 
         /* Header */
@@ -112,13 +146,11 @@
             z-index: 10;
             padding-bottom: 100px;
         }
-        /* Fade out and scale down when hiding */
         #uploadView.hidden {
             opacity: 0;
             transform: scale(0.95);
             pointer-events: none;
         }
-        /* Normal state */
         #uploadView.active {
             opacity: 1;
             transform: scale(1);
@@ -127,7 +159,7 @@
 
         .upload-area {
             width: 100%;
-            max-width: 400px;
+            max-width: 100%; /* Fill container */
             border: 2px dashed var(--border-color);
             border-radius: 20px;
             padding: 60px 20px;
@@ -151,13 +183,11 @@
             z-index: 20;
             background: var(--bg-color);
         }
-        /* Slide down when hidden */
         #editorView.hidden {
             opacity: 0;
             transform: translateY(100%);
             pointer-events: none;
         }
-        /* Slide up when active */
         #editorView.active {
             opacity: 1;
             transform: translateY(0);
@@ -266,7 +296,7 @@
             border: 1px solid var(--input-border);
             border-radius: 10px;
             padding: 12px;
-            padding-right: 36px; /* Space for arrow */
+            padding-right: 36px;
             font-size: 15px;
             appearance: none;
             -webkit-appearance: none;
@@ -278,13 +308,7 @@
             border-color: var(--accent-color);
             background-color: var(--bg-color);
         }
-        /* Dropdown options background (best effort) */
-        option {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 10px;
-        }
-        /* Custom Arrow */
+        option { background-color: var(--bg-color); color: var(--text-color); padding: 10px; }
         .select-arrow {
             position: absolute;
             right: 12px;
@@ -302,35 +326,23 @@
             width: fit-content;
             user-select: none;
         }
-        
-        /* Custom Checkbox Design */
         .checkbox-custom {
-            width: 20px;
-            height: 20px;
+            width: 20px; height: 20px;
             border: 2px solid var(--secondary-text);
             border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             transition: all 0.2s;
             background: var(--bg-color);
         }
         .checkbox-custom i {
-            color: white;
-            font-size: 12px;
-            transform: scale(0);
-            transition: transform 0.2s;
+            color: white; font-size: 12px; transform: scale(0); transition: transform 0.2s;
         }
-        /* Hidden real checkbox */
         input[type="checkbox"] { display: none; }
-        
         input[type="checkbox"]:checked + .checkbox-custom {
             background-color: var(--accent-color);
             border-color: var(--accent-color);
         }
-        input[type="checkbox"]:checked + .checkbox-custom i {
-            transform: scale(1);
-        }
+        input[type="checkbox"]:checked + .checkbox-custom i { transform: scale(1); }
 
         /* Presets */
         .presets-container {
@@ -400,9 +412,9 @@
             font-weight: 500;
         }
 
-        /* Modal */
+        /* Modal - Now positioned absolute within app-frame */
         .modal {
-            position: fixed; inset: 0;
+            position: absolute; inset: 0;
             background: rgba(0,0,0,0.95);
             z-index: 100;
             display: flex; justify-content: center; align-items: center;
@@ -433,12 +445,16 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Toast - Now positioned absolute within app-frame */
         .toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            /* Override top/bottom depending on design, here bottom is safer for absolute inside rel */
+            top: auto; 
             background: rgba(30, 30, 30, 0.9); color: white;
             padding: 10px 20px; border-radius: 20px; font-size: 13px;
             opacity: 0; pointer-events: none; transition: opacity 0.3s;
             z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: max-content;
+            white-space: nowrap;
         }
         .toast.show { opacity: 1; }
 
@@ -446,104 +462,108 @@
 </head>
 <body>
 
-<header>
-    <h1>Resizer</h1>
-    <button class="theme-toggle" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
-</header>
+<!-- Mobile App Wrapper -->
+<div id="app-frame">
+    <header>
+        <h1>Resizer</h1>
+        <button class="theme-toggle" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
+    </header>
 
-<div class="main-container">
-    <!-- Upload View -->
-    <div id="uploadView" class="view active">
-        <div class="card upload-area" id="dropZone">
-            <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-            <div class="upload-text">画像を選択</div>
-            <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp, image/heic, image/heif">
+    <div class="main-container">
+        <!-- Upload View -->
+        <div id="uploadView" class="view active">
+            <div class="card upload-area" id="dropZone">
+                <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                <div class="upload-text">画像を選択</div>
+                <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp, image/heic, image/heif">
+            </div>
+        </div>
+
+        <!-- Editor View (Overlay) -->
+        <div id="editorView" class="view hidden">
+            <div class="preview-area">
+                <img id="previewImage" src="" alt="">
+                <div class="file-info-overlay" id="fileInfoOverlay">Loading...</div>
+            </div>
+
+            <div class="controls-sheet">
+                <!-- Dimensions -->
+                <div class="row">
+                    <div class="col">
+                        <label class="label">横幅 (Width)</label>
+                        <div class="input-group">
+                            <input type="number" id="widthInput" placeholder="0">
+                            <span class="unit">px</span>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="label">高さ (Height)</label>
+                        <div class="input-group">
+                            <input type="number" id="heightInput" placeholder="0">
+                            <span class="unit">px</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aspect Ratio Checkbox -->
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" id="aspectRatioCheck" checked>
+                    <div class="checkbox-custom"><i class="fa-solid fa-check"></i></div>
+                    <span>縦横比を維持</span>
+                </label>
+
+                <!-- Presets -->
+                <div>
+                    <label class="label">プリセット (横幅)</label>
+                    <div class="presets-container" id="presetContainer">
+                        <button class="preset-btn" data-w="320">320px</button>
+                        <button class="preset-btn" data-w="640">640px</button>
+                        <button class="preset-btn" data-w="1280">1280px</button>
+                        <button class="preset-btn" data-w="1920">1920px</button>
+                    </div>
+                </div>
+
+                <!-- Format -->
+                <div class="row">
+                    <div class="col">
+                        <label class="label">拡張子</label>
+                        <div class="select-wrapper">
+                            <select id="formatSelect">
+                                <option value="image/jpeg">JPG</option>
+                                <option value="image/png">PNG</option>
+                                <option value="image/webp">WebP</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-arrow"></i>
+                        </div>
+                    </div>
+                    <div class="col" style="display:flex; align-items:flex-end;">
+                         <div class="estimate" id="estimateSize">約 ---.- B</div>
+                    </div>
+                </div>
+
+                <!-- Main Button -->
+                <button class="action-btn" id="convertBtn">
+                    <div class="spinner" id="btnSpinner"></div>
+                    <span id="btnText"><i class="fa-solid fa-wand-magic-sparkles"></i> 変換</span>
+                </button>
+                
+                <!-- Reset Button -->
+                <button class="reset-btn" id="resetBtn">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> 画像を変更
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Editor View (Overlay) -->
-    <div id="editorView" class="view hidden">
-        <div class="preview-area">
-            <img id="previewImage" src="" alt="">
-            <div class="file-info-overlay" id="fileInfoOverlay">Loading...</div>
-        </div>
-
-        <div class="controls-sheet">
-            <!-- Dimensions -->
-            <div class="row">
-                <div class="col">
-                    <label class="label">横幅 (Width)</label>
-                    <div class="input-group">
-                        <input type="number" id="widthInput" placeholder="0">
-                        <span class="unit">px</span>
-                    </div>
-                </div>
-                <div class="col">
-                    <label class="label">高さ (Height)</label>
-                    <div class="input-group">
-                        <input type="number" id="heightInput" placeholder="0">
-                        <span class="unit">px</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Aspect Ratio Checkbox -->
-            <label class="checkbox-wrapper">
-                <input type="checkbox" id="aspectRatioCheck" checked>
-                <div class="checkbox-custom"><i class="fa-solid fa-check"></i></div>
-                <span>縦横比を維持</span>
-            </label>
-
-            <!-- Presets -->
-            <div>
-                <label class="label">プリセット (横幅)</label>
-                <div class="presets-container" id="presetContainer">
-                    <button class="preset-btn" data-w="320">320px</button>
-                    <button class="preset-btn" data-w="640">640px</button>
-                    <button class="preset-btn" data-w="1280">1280px</button>
-                    <button class="preset-btn" data-w="1920">1920px</button>
-                </div>
-            </div>
-
-            <!-- Format -->
-            <div class="row">
-                <div class="col">
-                    <label class="label">拡張子</label>
-                    <div class="select-wrapper">
-                        <select id="formatSelect">
-                            <option value="image/jpeg">JPG</option>
-                            <option value="image/png">PNG</option>
-                            <option value="image/webp">WebP</option>
-                        </select>
-                        <i class="fa-solid fa-chevron-down select-arrow"></i>
-                    </div>
-                </div>
-                <div class="col" style="display:flex; align-items:flex-end;">
-                     <div class="estimate" id="estimateSize">約 ---.- B</div>
-                </div>
-            </div>
-
-            <!-- Main Button -->
-            <button class="action-btn" id="convertBtn">
-                <div class="spinner" id="btnSpinner"></div>
-                <span id="btnText"><i class="fa-solid fa-wand-magic-sparkles"></i> 変換</span>
-            </button>
-            
-            <!-- Reset Button -->
-            <button class="reset-btn" id="resetBtn">
-                <i class="fa-solid fa-arrow-rotate-left"></i> 画像を変更
-            </button>
-        </div>
+    <!-- Modal -->
+    <div class="modal" id="imageModal">
+        <button class="close-modal" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+        <img id="modalImage" src="" alt="">
     </div>
-</div>
 
-<!-- Modal -->
-<div class="modal" id="imageModal">
-    <button class="close-modal" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
-    <img id="modalImage" src="" alt="">
+    <div class="toast" id="toast">Message</div>
 </div>
-
-<div class="toast" id="toast">Message</div>
+<!-- End App Wrapper -->
 
 <script>
     // --- Elements ---
@@ -606,7 +626,6 @@
         uploadView.classList.remove('active');
         uploadView.classList.add('hidden');
         
-        // Slight delay to allow upload view to fade out nicely before sliding up
         setTimeout(() => {
             editorView.classList.remove('hidden');
             editorView.classList.add('active');
@@ -617,12 +636,11 @@
         editorView.classList.remove('active');
         editorView.classList.add('hidden');
 
-        // Wait for slide down to finish before showing upload
         setTimeout(() => {
             uploadView.classList.remove('hidden');
             uploadView.classList.add('active');
             
-            // Clean up state
+            // Clean up
             fileInput.value = '';
             originalImage = null;
             previewImage.src = '';
@@ -689,9 +707,8 @@
                 heightInput.value = originalH;
                 
                 updatePresetsState();
-                validate(); // Init validation
+                validate(); 
 
-                // Trigger Animation
                 showEditor();
             };
             originalImage.src = e.target.result;
@@ -762,7 +779,6 @@
         btn.addEventListener('click', () => {
             const targetW = parseInt(btn.dataset.w);
             
-            // Auto-check ratio if preset is clicked
             if (!aspectRatioCheck.checked) {
                 aspectRatioCheck.checked = true;
             }
@@ -796,7 +812,7 @@
         });
     }
 
-    // --- Estimate Size (Updated Logic) ---
+    // --- Estimate Size ---
     function updateEstimate(hasError) {
         if (hasError) {
             estimateSize.textContent = "約 ---.- B";
@@ -810,19 +826,10 @@
             return;
         }
         
-        // Revised Estimation Factors (Bytes per pixel)
-        // JPEG (92%): ~0.25
-        // PNG (Photo/Complex): ~0.9
-        // WebP (92%): ~0.2
         let bpp = 0.25; 
-        
-        if (formatSelect.value === 'image/png') {
-            bpp = 0.9; 
-        } else if (formatSelect.value === 'image/webp') {
-            bpp = 0.2; 
-        } else if (formatSelect.value === 'image/jpeg') {
-            bpp = 0.25; 
-        }
+        if (formatSelect.value === 'image/png') bpp = 0.9; 
+        else if (formatSelect.value === 'image/webp') bpp = 0.2; 
+        else if (formatSelect.value === 'image/jpeg') bpp = 0.25; 
         
         const estBytes = w * h * bpp;
         estimateSize.textContent = `約 ${formatBytes(estBytes)}`;
@@ -868,7 +875,6 @@
                         return;
                     }
 
-                    // Filename Generation: name_WxH.ext
                     const extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
                     const outExt = extMap[format];
                     const originalBase = originalFile.name.substring(0, originalFile.name.lastIndexOf('.')) || originalFile.name;
