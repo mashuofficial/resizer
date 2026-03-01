@@ -70,7 +70,6 @@
             transition: background-color var(--transition-speed) ease;
             text-size-adjust: 100%;
             -webkit-text-size-adjust: 100%;
-            -moz-text-size-adjust: 100%;
         }
 
         #app-frame {
@@ -241,8 +240,9 @@
             }
         }
 
-        /* Inputs */
-        .row { display: flex; gap: 16px; align-items: center; }
+        /* Inputs & Layout */
+        /* Align items to bottom so button matches inputs */
+        .row { display: flex; gap: 8px; align-items: flex-end; }
         .col { flex: 1; min-width: 0; }
         .label { 
             font-size: 11px; color: var(--secondary-text); 
@@ -274,6 +274,24 @@
             box-shadow: 0 0 0 2px rgba(255,59,48,0.1);
         }
         .unit { position: absolute; right: 12px; font-size: 12px; color: var(--secondary-text); pointer-events: none; }
+
+        /* Swap Button */
+        .swap-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 12px 8px;
+            margin-bottom: 2px; /* Align with input box visual center */
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            border-radius: 8px;
+        }
+        .swap-btn:active {
+            background-color: var(--input-bg);
+            transform: scale(0.9);
+        }
 
         /* Custom Select Box */
         .select-wrapper { position: relative; width: 100%; }
@@ -342,20 +360,21 @@
         .segmented-control {
             display: flex;
             background: var(--input-bg);
-            border-radius: 8px;
-            padding: 2px;
+            border-radius: 12px; /* More rounded */
+            padding: 4px;
             gap: 2px;
         }
         .segmented-control input[type="radio"] {
             display: none;
         }
         .segmented-control label {
-            padding: 4px 12px;
-            font-size: 12px;
-            border-radius: 6px;
+            padding: 8px 16px; /* Bigger touch area */
+            font-size: 13px;
+            border-radius: 8px;
             cursor: pointer;
             color: var(--secondary-text);
             transition: all 0.2s;
+            font-weight: 500;
         }
         .segmented-control input[type="radio"]:checked + label {
             background: var(--bg-color);
@@ -511,7 +530,7 @@
             </div>
 
             <div class="controls-sheet">
-                <!-- Dimensions -->
+                <!-- Dimensions with Swap Button -->
                 <div class="row">
                     <div class="col">
                         <label class="label">横幅 (Width)</label>
@@ -520,8 +539,13 @@
                             <span class="unit">px</span>
                         </div>
                     </div>
+                    
+                    <button class="swap-btn" id="swapBtn" title="数値を入れ替え">
+                        <i class="fa-solid fa-right-left"></i>
+                    </button>
+
                     <div class="col">
-                        <label class="label">高さ (Height)</label>
+                        <label class="label">縦幅 (Height)</label>
                         <div class="input-group">
                             <input type="number" id="heightInput" placeholder="0">
                             <span class="unit">px</span>
@@ -558,7 +582,7 @@
                 </div>
 
                 <!-- Format -->
-                <div class="row">
+                <div class="row" style="align-items: center;">
                     <div class="col">
                         <label class="label">拡張子</label>
                         <div class="select-wrapper">
@@ -609,6 +633,7 @@
     
     const widthInput = document.getElementById('widthInput');
     const heightInput = document.getElementById('heightInput');
+    const swapBtn = document.getElementById('swapBtn'); // New button
     const aspectRatioCheck = document.getElementById('aspectRatioCheck');
     const presetBtns = document.querySelectorAll('.preset-btn');
     const formatSelect = document.getElementById('formatSelect');
@@ -627,7 +652,7 @@
     const modalImage = document.getElementById('modalImage');
     const closeModal = document.getElementById('closeModal');
 
-    // --- Disable Zoom via Keyboard/Mouse ---
+    // --- Disable Zoom ---
     document.addEventListener('keydown', function(e) {
         if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '=')) {
             e.preventDefault();
@@ -646,7 +671,7 @@
     let originalFile = null;
     let originalSizeStr = "";
     let aspectRatio = 0;
-    let presetMode = 'width'; // 'width' or 'height'
+    let presetMode = 'width'; 
 
     // --- Device Detection ---
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -766,6 +791,7 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
     }
 
+    // --- Inputs Logic ---
     widthInput.addEventListener('input', () => {
         if (aspectRatioCheck.checked && widthInput.value) {
             heightInput.value = Math.round(widthInput.value / aspectRatio);
@@ -787,6 +813,32 @@
         }
     });
 
+    // --- Swap Button Logic ---
+    swapBtn.addEventListener('click', () => {
+        const wVal = widthInput.value;
+        const hVal = heightInput.value;
+        
+        // Swap values
+        widthInput.value = hVal;
+        heightInput.value = wVal;
+        
+        // Invert aspect ratio logic if checked
+        if (aspectRatioCheck.checked && wVal && hVal) {
+            aspectRatio = 1 / aspectRatio;
+        }
+        
+        validate();
+        
+        // Animation
+        const icon = swapBtn.querySelector('i');
+        icon.style.transition = 'transform 0.3s';
+        icon.style.transform = 'rotate(180deg)';
+        setTimeout(() => {
+            icon.style.transition = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        }, 300);
+    });
+
     formatSelect.addEventListener('change', () => updateEstimate(false));
 
     function validate() {
@@ -794,18 +846,34 @@
         const h = parseInt(heightInput.value) || 0;
         let hasError = false;
 
-        if (w > originalW) {
-            widthInput.classList.add('error');
-            hasError = true;
+        // Note: Logic allows rotating image (swapping dimensions), so we check against max dimension loosely or specific logic
+        // For simplicity, we just check if it's unreasonably large, or let users resize freely.
+        // But original request said "red if larger than original". 
+        // If swapped, 1920x1080 -> 1080x1920. 1080 <= 1920 (ok), 1920 > 1080 (error?).
+        // Usually resizing tools allow changing aspect ratio or orientation.
+        // Let's keep strict check against Original W/H for now to be safe, 
+        // but if user intentionally swaps, they might want to distort or rotate (canvas draw will distort if not handled).
+        // Since canvas logic is `drawImage(img, 0, 0, w, h)`, it distorts.
+        
+        if (w > originalW && w > originalH) { // Relaxed check: error only if width > max(origW, origH)? 
+            // Stick to strict original request: Width > Original Width = Error
+             widthInput.classList.add('error');
+             hasError = true;
+        } else if (w > originalW) {
+             widthInput.classList.add('error');
+             hasError = true;
         } else {
-            widthInput.classList.remove('error');
+             widthInput.classList.remove('error');
         }
 
-        if (h > originalH) {
-            heightInput.classList.add('error');
-            hasError = true;
+        if (h > originalH && h > originalW) {
+             heightInput.classList.add('error');
+             hasError = true;
+        } else if (h > originalH) {
+             heightInput.classList.add('error');
+             hasError = true;
         } else {
-            heightInput.classList.remove('error');
+             heightInput.classList.remove('error');
         }
 
         convertBtn.disabled = hasError || w <= 0 || h <= 0;
@@ -818,7 +886,6 @@
         input.addEventListener('change', (e) => {
             presetMode = e.target.value;
             updatePresetsState();
-            // Optional: Re-validate active state
             const currentVal = presetMode === 'width' ? parseInt(widthInput.value) : parseInt(heightInput.value);
             updateActivePreset(currentVal);
         });
