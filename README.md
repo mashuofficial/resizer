@@ -1,1 +1,1 @@
-# resize
+# resizer
