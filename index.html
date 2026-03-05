@@ -57,7 +57,6 @@
             --active-border: #FFFFFF;
             --shadow: 0 -4px 20px rgba(0,0,0,0.4);
             
-            /* Checkerboard for transparency (Dark) */
             --checker-c1: #2c2c2e;
             --checker-c2: #1c1c1e;
         }
@@ -190,7 +189,7 @@
             padding: 20px;
             overflow: hidden;
             position: relative;
-            /* Checkerboard pattern for transparency */
+            /* Checkerboard pattern */
             background-image: 
                 linear-gradient(45deg, var(--checker-c2) 25%, transparent 25%), 
                 linear-gradient(-45deg, var(--checker-c2) 25%, transparent 25%), 
@@ -204,7 +203,6 @@
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            /* No border radius or shadow to see transparency clearly */
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             cursor: zoom-in;
             transition: transform 0.2s;
@@ -362,8 +360,7 @@
         .preset-header {
             display: flex;
             align-items: center;
-            /* 隙間を詰める修正 */
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
         .presets-container {
             display: flex; 
@@ -378,7 +375,7 @@
             background: var(--input-bg);
             border: 1px solid var(--input-border);
             border-radius: 10px;
-            padding: 10px 12px;
+            padding: 10px 8px; /* Adjusted padding to bring text closer */
             font-size: 13px;
             font-weight: 500;
             color: var(--text-color);
@@ -387,7 +384,7 @@
             transition: all 0.2s;
             text-align: center;
             position: relative;
-            flex: 1 1 auto; /* Grow to fill space */
+            flex: 1 1 auto;
             min-width: 60px;
         }
         .preset-btn.add-btn {
@@ -459,7 +456,6 @@
             object-fit: contain;
             user-select: none;
             border-radius: 4px;
-            /* Checkerboard in modal too */
             background-image: 
                 linear-gradient(45deg, #ccc 25%, transparent 25%), 
                 linear-gradient(-45deg, #ccc 25%, transparent 25%), 
@@ -757,17 +753,21 @@
 
     // --- Preset Logic (Load/Save/Render) ---
     function loadPresets() {
-        const stored = localStorage.getItem('userPresets');
-        if (stored) {
-            presets = JSON.parse(stored);
-        } else {
-            // Defaults
-            presets = [
-                { id: 1, name: '320w', mode: 'width', val: 320 },
-                { id: 2, name: '640w', mode: 'width', val: 640 },
-                { id: 3, name: '1280w', mode: 'width', val: 1280 },
-                { id: 4, name: '1920w', mode: 'width', val: 1920 }
-            ];
+        try {
+            const stored = localStorage.getItem('userPresets');
+            if (stored) {
+                presets = JSON.parse(stored);
+            } else {
+                presets = [
+                    { id: 1, name: '320w', mode: 'width', val: 320 },
+                    { id: 2, name: '640w', mode: 'width', val: 640 },
+                    { id: 3, name: '1280w', mode: 'width', val: 1280 },
+                    { id: 4, name: '1920w', mode: 'width', val: 1920 }
+                ];
+            }
+        } catch (e) {
+            console.error("Preset load error", e);
+            presets = [];
         }
         renderPresets();
     }
@@ -782,21 +782,18 @@
             btn.className = 'preset-btn';
             btn.textContent = p.name;
             
-            // Apply Click
             btn.addEventListener('click', () => applyPreset(p, btn));
             
             // Delete (Long Press)
             let pressTimer;
-            btn.addEventListener('touchstart', (e) => {
-                // e.preventDefault(); // allow click
-                pressTimer = setTimeout(() => deletePreset(p.id), 800);
-            });
-            btn.addEventListener('touchend', () => clearTimeout(pressTimer));
-            btn.addEventListener('mousedown', () => {
-                pressTimer = setTimeout(() => deletePreset(p.id), 800);
-            });
-            btn.addEventListener('mouseup', () => clearTimeout(pressTimer));
-            btn.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+            const startPress = () => { pressTimer = setTimeout(() => deletePreset(p.id), 800); };
+            const cancelPress = () => clearTimeout(pressTimer);
+            
+            btn.addEventListener('touchstart', startPress);
+            btn.addEventListener('touchend', cancelPress);
+            btn.addEventListener('mousedown', startPress);
+            btn.addEventListener('mouseup', cancelPress);
+            btn.addEventListener('mouseleave', cancelPress);
 
             presetContainer.insertBefore(btn, addPresetBtn);
         });
@@ -805,9 +802,8 @@
     function applyPreset(p, btnEl) {
         if (!originalImage) return;
 
-        // Reset active state
         document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-        btnEl.classList.add('active');
+        if (btnEl) btnEl.classList.add('active');
 
         if (p.mode === 'fixed') {
             aspectRatioCheck.checked = false;
@@ -888,7 +884,8 @@
         showToast("プリセットを保存しました");
     });
 
-    loadPresets(); // Init presets
+    // Init presets
+    loadPresets(); 
 
     // --- File Handling ---
     dropZone.addEventListener('click', () => fileInput.click());
@@ -945,7 +942,14 @@
                 heightInput.value = originalH;
                 
                 validate(); 
-                showEditor();
+                
+                // Show Editor (Animation)
+                uploadView.classList.remove('active');
+                uploadView.classList.add('hidden');
+                setTimeout(() => {
+                    editorView.classList.remove('hidden');
+                    editorView.classList.add('active');
+                }, 100);
             };
             originalImage.src = e.target.result;
         };
@@ -1002,12 +1006,6 @@
         const h = parseInt(heightInput.value) || 0;
         let hasError = false;
 
-        // Validation against original size (optional but kept for safety)
-        if (w > originalW * 5) { // Allow upsizing but warn if extreme? Let's stick to simple red text logic
-             // Original requirement was stricter, relaxing slightly for swap scenarios
-        }
-        
-        // Simple error class application logic
         if (w <= 0) { widthInput.classList.add('error'); hasError=true; } else widthInput.classList.remove('error');
         if (h <= 0) { heightInput.classList.add('error'); hasError=true; } else heightInput.classList.remove('error');
 
@@ -1033,7 +1031,18 @@
     previewImage.addEventListener('click', () => modal.classList.add('open'));
     closeModal.addEventListener('click', () => modal.classList.remove('open'));
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
-    resetBtn.addEventListener('click', showUpload);
+    
+    resetBtn.addEventListener('click', () => {
+        editorView.classList.remove('active');
+        editorView.classList.add('hidden');
+        setTimeout(() => {
+            uploadView.classList.remove('hidden');
+            uploadView.classList.add('active');
+            fileInput.value = '';
+            originalImage = null;
+            previewImage.src = '';
+        }, 300);
+    });
 
     // --- Convert & Export ---
     convertBtn.addEventListener('click', async () => {
@@ -1053,12 +1062,12 @@
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
 
-                // Handle Transparency: Fill white only for JPEG
+                // Handle Transparency: Fill white ONLY for JPEG
                 if (format === 'image/jpeg') {
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, w, h);
                 } else {
-                    // For PNG/WebP, we clear to ensure transparency works
+                    // For PNG/WebP, canvas is transparent by default, but clear just in case
                     ctx.clearRect(0, 0, w, h);
                 }
 
