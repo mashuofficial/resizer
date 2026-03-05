@@ -375,7 +375,7 @@
             background: var(--input-bg);
             border: 1px solid var(--input-border);
             border-radius: 10px;
-            padding: 10px 8px; /* Adjusted padding to bring text closer */
+            padding: 10px 8px;
             font-size: 13px;
             font-weight: 500;
             color: var(--text-color);
@@ -451,6 +451,7 @@
             transition: opacity 0.3s;
         }
         .modal.open { opacity: 1; pointer-events: auto; }
+        
         .modal img {
             max-width: 95%; max-height: 95%;
             object-fit: contain;
@@ -620,7 +621,7 @@
     </div>
 
     <!-- Preset Creation Modal -->
-    <div class="modal" id="presetModal" style="display:none; opacity:0;">
+    <div class="modal" id="presetModal">
         <div class="modal-content">
             <div class="modal-title">プリセット作成</div>
             
@@ -758,12 +759,7 @@
             if (stored) {
                 presets = JSON.parse(stored);
             } else {
-                presets = [
-                    { id: 1, name: '320w', mode: 'width', val: 320 },
-                    { id: 2, name: '640w', mode: 'width', val: 640 },
-                    { id: 3, name: '1280w', mode: 'width', val: 1280 },
-                    { id: 4, name: '1920w', mode: 'width', val: 1920 }
-                ];
+                presets = []; // Empty by default as requested
             }
         } catch (e) {
             console.error("Preset load error", e);
@@ -789,7 +785,7 @@
             const startPress = () => { pressTimer = setTimeout(() => deletePreset(p.id), 800); };
             const cancelPress = () => clearTimeout(pressTimer);
             
-            btn.addEventListener('touchstart', startPress);
+            btn.addEventListener('touchstart', startPress, {passive: true});
             btn.addEventListener('touchend', cancelPress);
             btn.addEventListener('mousedown', startPress);
             btn.addEventListener('mouseup', cancelPress);
@@ -832,17 +828,16 @@
 
     // --- Preset Creation Modal Logic ---
     addPresetBtn.addEventListener('click', () => {
-        presetModal.style.display = 'flex';
-        setTimeout(() => presetModal.style.opacity = 1, 10);
+        presetModal.classList.add('open');
         newPresetName.value = '';
         newPresetValue.value = '';
+        newPresetW.value = '';
+        newPresetH.value = '';
     });
 
-    const hidePresetModal = () => {
-        presetModal.style.opacity = 0;
-        setTimeout(() => presetModal.style.display = 'none', 300);
-    };
-    closePresetModal.addEventListener('click', hidePresetModal);
+    closePresetModal.addEventListener('click', () => {
+        presetModal.classList.remove('open');
+    });
 
     newPresetMode.addEventListener('change', (e) => {
         if (e.target.value === 'fixed') {
@@ -880,7 +875,7 @@
         presets.push(newPreset);
         localStorage.setItem('userPresets', JSON.stringify(presets));
         renderPresets();
-        hidePresetModal();
+        presetModal.classList.remove('open');
         showToast("プリセットを保存しました");
     });
 
