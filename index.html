@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Resizer</title>
     
-    <!-- PWA Settings (iOS) -->
+    <!-- PWA Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Resizer">
-    <link rel="apple-touch-icon" href="icon_512x512.jpg">
-    <link rel="icon" href="icon_512x512.jpg">
-
-    <!-- PWA Settings (Android/Manifest) -->
+    <link rel="apple-touch-icon" href="pwaicon.jpg">
+    <link rel="icon" href="pwaicon.jpg">
     <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiUmVzaXplciIsInNob3J0X25hbWUiOiJSZXNpemVyIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiNmZmZmZmYiLCJpY29ucyI6W3sic3JjIjoiaWNvbl81MTJ4NTEyLmpwZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9qcGVnIn1dfQ==">
 
     <!-- Libraries -->
@@ -21,7 +19,6 @@
 
     <style>
         :root {
-            /* Light Mode */
             --bg-color: #FFFFFF;
             --surface-color: #FFFFFF;
             --sheet-bg: rgba(255, 255, 255, 0.95);
@@ -36,9 +33,7 @@
             --shadow: 0 4px 20px rgba(0,0,0,0.08);
             --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --transition-speed: 0.3s;
-            --bezier: cubic-bezier(0.25, 1, 0.5, 1);
             
-            /* Checkerboard for transparency */
             --checker-c1: #ffffff;
             --checker-c2: #e0e0e0;
         }
@@ -106,7 +101,7 @@
             color: var(--text-color); font-size: 18px; padding: 8px;
         }
 
-        /* Container for Views */
+        /* Main Container */
         .main-container {
             position: relative;
             flex: 1;
@@ -115,11 +110,11 @@
             overflow: hidden;
         }
 
-        /* --- View Transitions --- */
+        /* Views */
         .view {
             position: absolute;
             inset: 0;
-            transition: opacity 0.4s var(--bezier), transform 0.4s var(--bezier);
+            transition: opacity 0.3s ease, transform 0.3s ease;
             will-change: opacity, transform;
             display: flex;
             flex-direction: column;
@@ -133,16 +128,8 @@
             z-index: 10;
             padding-bottom: 100px;
         }
-        #uploadView.hidden {
-            opacity: 0;
-            transform: scale(0.95);
-            pointer-events: none;
-        }
-        #uploadView.active {
-            opacity: 1;
-            transform: scale(1);
-            pointer-events: auto;
-        }
+        #uploadView.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
+        #uploadView.active { opacity: 1; transform: scale(1); pointer-events: auto; }
 
         .upload-area {
             width: 100%;
@@ -153,33 +140,19 @@
             text-align: center;
             background: var(--surface-color);
             cursor: pointer;
-            transition: border-color 0.2s, background-color 0.2s;
+            transition: 0.2s;
         }
-        .upload-area:active, .upload-area.hover { 
-            border-color: var(--accent-color); 
-            background: rgba(0,122,255,0.03); 
-        }
+        .upload-area:active { background: rgba(0,122,255,0.05); border-color: var(--accent-color); }
         .upload-icon { font-size: 48px; margin-bottom: 16px; color: var(--accent-color); }
         .upload-text { color: var(--secondary-text); font-size: 15px; font-weight: 500; }
         #fileInput { display: none; }
 
         /* Editor View */
-        #editorView {
-            z-index: 20;
-            background: var(--bg-color);
-        }
-        #editorView.hidden {
-            opacity: 0;
-            transform: translateY(100%);
-            pointer-events: none;
-        }
-        #editorView.active {
-            opacity: 1;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
+        #editorView { z-index: 20; background: var(--bg-color); }
+        #editorView.hidden { opacity: 0; transform: translateY(100%); pointer-events: none; }
+        #editorView.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
-        /* Image Preview Area */
+        /* Preview */
         .preview-area {
             flex: 1;
             display: flex;
@@ -189,282 +162,140 @@
             padding: 20px;
             overflow: hidden;
             position: relative;
-            /* Checkerboard pattern */
-            background-image: 
-                linear-gradient(45deg, var(--checker-c2) 25%, transparent 25%), 
-                linear-gradient(-45deg, var(--checker-c2) 25%, transparent 25%), 
-                linear-gradient(45deg, transparent 75%, var(--checker-c2) 75%), 
-                linear-gradient(-45deg, transparent 75%, var(--checker-c2) 75%);
+            /* Checkerboard */
+            background-image: linear-gradient(45deg, var(--checker-c2) 25%, transparent 25%), linear-gradient(-45deg, var(--checker-c2) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--checker-c2) 75%), linear-gradient(-45deg, transparent 75%, var(--checker-c2) 75%);
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
             background-color: var(--checker-c1);
         }
         #previewImage {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
+            max-width: 100%; max-height: 100%; object-fit: contain;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            cursor: zoom-in;
             transition: transform 0.2s;
         }
-        #previewImage:active { transform: scale(0.98); }
-
         .file-info-overlay {
-            position: absolute;
-            top: 20px;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(10px);
+            position: absolute; top: 20px;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            pointer-events: none;
-            z-index: 5;
-            letter-spacing: 0.5px;
+            color: white; padding: 6px 14px; border-radius: 20px;
+            font-size: 12px; font-weight: 600; pointer-events: none; z-index: 5;
         }
 
-        /* Controls Sheet */
+        /* Controls */
         .controls-sheet {
             flex: 0 0 auto;
             background: var(--sheet-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
+            border-top-left-radius: 24px; border-top-right-radius: 24px;
             box-shadow: var(--shadow);
             padding: 24px 24px max(24px, env(safe-area-inset-bottom)) 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            max-height: 60vh;
-            overflow-y: auto;
+            display: flex; flex-direction: column; gap: 16px;
+            max-height: 60vh; overflow-y: auto;
             border-top: 1px solid var(--border-color);
-            
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
+            width: 100%; max-width: 600px; margin: 0 auto;
         }
-        
         @media (min-width: 600px) {
-            .controls-sheet {
-                border-radius: 24px 24px 0 0;
-                border-left: 1px solid var(--border-color);
-                border-right: 1px solid var(--border-color);
-            }
+            .controls-sheet { border-radius: 24px 24px 0 0; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
         }
 
-        /* Inputs & Layout */
         .row { display: flex; gap: 8px; align-items: flex-end; }
         .col { flex: 1; min-width: 0; }
-        .label { 
-            font-size: 11px; color: var(--secondary-text); 
-            margin-bottom: 8px; text-transform: uppercase; 
-            font-weight: 600; display: block; letter-spacing: 0.5px;
-        }
+        .label { font-size: 11px; color: var(--secondary-text); margin-bottom: 8px; text-transform: uppercase; font-weight: 600; display: block; }
         
         .input-group { position: relative; display: flex; align-items: center; }
         input[type="number"], input[type="text"] {
-            width: 100%;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            border-radius: 10px;
-            padding: 12px;
-            font-size: 16px;
-            color: var(--text-color);
-            text-align: center;
-            outline: none;
-            transition: all 0.2s;
+            width: 100%; background: var(--input-bg);
+            border: 1px solid var(--input-border); border-radius: 10px;
+            padding: 12px; font-size: 16px; color: var(--text-color);
+            text-align: center; outline: none; transition: 0.2s;
         }
-        input[type="number"]:focus, input[type="text"]:focus { 
-            border-color: var(--accent-color); 
-            background: var(--bg-color);
-            box-shadow: 0 0 0 2px rgba(0,122,255,0.1); 
-        }
-        input[type="number"].error { 
-            color: var(--danger-color); 
-            border-color: var(--danger-color); 
-            box-shadow: 0 0 0 2px rgba(255,59,48,0.1);
-        }
+        input:focus { border-color: var(--accent-color); background: var(--bg-color); box-shadow: 0 0 0 2px rgba(0,122,255,0.1); }
+        input.error { color: var(--danger-color); border-color: var(--danger-color); box-shadow: 0 0 0 2px rgba(255,59,48,0.1); }
         .unit { position: absolute; right: 12px; font-size: 12px; color: var(--secondary-text); pointer-events: none; }
 
-        /* Swap Button */
         .swap-btn {
-            background: none;
-            border: none;
-            color: var(--accent-color);
-            font-size: 16px;
-            cursor: pointer;
-            padding: 12px 8px;
-            margin-bottom: 2px;
-            transition: transform 0.2s;
-            flex-shrink: 0;
-            border-radius: 8px;
+            background: none; border: none; color: var(--accent-color);
+            font-size: 16px; cursor: pointer; padding: 12px 8px; margin-bottom: 2px;
+            transition: 0.2s; flex-shrink: 0;
         }
-        .swap-btn:active {
-            background-color: var(--input-bg);
-            transform: scale(0.9);
-        }
+        .swap-btn:active { transform: scale(0.9); }
 
-        /* Checkbox */
         .checkbox-wrapper {
             display: flex; align-items: center; gap: 10px;
-            font-size: 14px; color: var(--text-color); cursor: pointer;
-            width: fit-content;
-            user-select: none;
+            font-size: 14px; color: var(--text-color); cursor: pointer; width: fit-content;
         }
         .checkbox-custom {
-            width: 20px; height: 20px;
-            border: 2px solid var(--secondary-text);
-            border-radius: 6px;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
-            background: var(--bg-color);
+            width: 20px; height: 20px; border: 2px solid var(--secondary-text);
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; background: var(--bg-color);
         }
-        .checkbox-custom i {
-            color: white; font-size: 12px; transform: scale(0); transition: transform 0.2s;
-        }
+        .checkbox-custom i { color: white; font-size: 12px; transform: scale(0); transition: 0.2s; }
         input[type="checkbox"] { display: none; }
-        input[type="checkbox"]:checked + .checkbox-custom {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-        }
+        input[type="checkbox"]:checked + .checkbox-custom { background-color: var(--accent-color); border-color: var(--accent-color); }
         input[type="checkbox"]:checked + .checkbox-custom i { transform: scale(1); }
 
-        /* Custom Select Box */
         .select-wrapper { position: relative; width: 100%; }
         select {
-            width: 100%;
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--input-border);
-            border-radius: 10px;
-            padding: 12px;
-            padding-right: 36px;
-            font-size: 15px;
-            appearance: none;
-            -webkit-appearance: none;
-            outline: none;
-            cursor: pointer;
-            transition: all 0.2s;
+            width: 100%; background: var(--input-bg); color: var(--text-color);
+            border: 1px solid var(--input-border); border-radius: 10px;
+            padding: 12px; padding-right: 36px; font-size: 15px;
+            appearance: none; -webkit-appearance: none; outline: none;
         }
-        select:focus { border-color: var(--accent-color); background-color: var(--bg-color); }
-        option { background-color: var(--bg-color); color: var(--text-color); padding: 10px; }
-        .select-arrow {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            color: var(--secondary-text); pointer-events: none; font-size: 12px;
-        }
+        .select-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--secondary-text); pointer-events: none; font-size: 12px; }
 
-        /* Presets (修正: CSS Gridで固定サイズ配置) */
-        .preset-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2px;
-        }
+        /* Presets */
+        .preset-header { display: flex; align-items: center; margin-bottom: 2px; }
         .presets-container {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 常に4列 */
-            gap: 8px;
-            padding: 4px;
-            margin: 0 -4px;
-            width: calc(100% + 8px);
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 8px; padding: 4px; margin: 0 -4px; width: calc(100% + 8px);
         }
         .preset-btn {
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            border-radius: 10px;
-            padding: 12px 2px; /* 上下パディングを確保、左右は狭く */
-            font-size: 12px; /* 少し小さくして収まりよくする */
-            font-weight: 500;
-            color: var(--text-color);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis; /* はみ出し対策 */
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-            position: relative;
-            /* サイズ固定設定 */
-            width: 100%; 
-            min-width: 0;
+            background: var(--input-bg); border: 1px solid var(--input-border);
+            border-radius: 10px; padding: 0; /* Remove default padding to rely on height/flex */
+            height: 44px; /* Fixed height for uniformity */
+            font-size: 12px; font-weight: 500; color: var(--text-color);
+            cursor: pointer; transition: 0.2s; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            width: 100%;
         }
-        .preset-btn.add-btn {
-            color: var(--accent-color);
-            font-weight: bold;
-            font-size: 14px;
-        }
+        .preset-btn.add-btn { color: var(--accent-color); font-size: 16px; }
         .preset-btn.active { 
-            border: 2px solid var(--active-border); 
-            background: var(--bg-color);
-            font-weight: 700;
-            transform: translateY(-1px);
-            z-index: 1;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 2px solid var(--active-border); background: var(--bg-color);
+            font-weight: 700; z-index: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .preset-btn:active { transform: scale(0.96); }
 
-        /* Estimate */
-        .estimate { 
-            text-align: right; font-size: 12px; color: var(--secondary-text); 
-            margin-top: -4px; width: 100%; white-space: nowrap; 
-            font-variant-numeric: tabular-nums;
-        }
+        .estimate { text-align: right; font-size: 12px; color: var(--secondary-text); margin-top: -4px; width: 100%; }
 
-        /* Main Buttons */
         .action-btn {
-            width: 100%;
-            background: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 14px;
-            padding: 16px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            transition: opacity 0.2s, transform 0.1s;
+            width: 100%; background: var(--accent-color); color: white;
+            border: none; border-radius: 14px; padding: 16px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            transition: 0.2s;
         }
         .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .action-btn:active { transform: scale(0.98); opacity: 0.9; }
         
         .reset-btn {
-            background: transparent;
-            color: var(--danger-color);
-            border: none;
-            padding: 12px;
-            font-size: 14px;
-            width: 100%;
-            cursor: pointer;
-            font-weight: 500;
+            background: transparent; color: var(--danger-color); border: none;
+            padding: 12px; font-size: 14px; width: 100%; cursor: pointer; font-weight: 500;
         }
 
         /* Modals */
         .modal {
-            position: absolute; inset: 0;
-            background: rgba(0,0,0,0.95);
-            z-index: 100;
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.3s;
+            position: absolute; inset: 0; background: rgba(0,0,0,0.95);
+            z-index: 100; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: 0.3s;
         }
         .modal.open { opacity: 1; pointer-events: auto; }
         
         .modal img {
-            max-width: 95%; max-height: 95%;
-            object-fit: contain;
-            user-select: none;
+            max-width: 95%; max-height: 95%; object-fit: contain;
             border-radius: 4px;
-            background-image: 
-                linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-                linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                linear-gradient(-45deg, transparent 75%, #ccc 75%);
-            background-size: 20px 20px;
-            background-color: #fff;
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px; background-color: #fff;
         }
         .close-modal {
             position: absolute; top: 20px; right: 20px;
@@ -473,34 +304,20 @@
             cursor: pointer; z-index: 101; display: flex; align-items: center; justify-content: center;
         }
 
-        /* Preset Creation Modal */
-        #presetModal {
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-        }
+        /* Preset Modal */
+        #presetModal { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
         .modal-content {
-            background: var(--sheet-bg);
-            padding: 24px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 320px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+            background: var(--sheet-bg); padding: 24px; border-radius: 20px;
+            width: 90%; max-width: 320px; box-shadow: var(--shadow);
+            display: flex; flex-direction: column; gap: 16px;
         }
         .modal-title { font-weight: bold; font-size: 18px; text-align: center; }
         .modal-actions { display: flex; gap: 10px; margin-top: 8px; }
         .cancel-btn { background: var(--input-bg); color: var(--text-color); }
 
-        /* Spinner & Toast */
         .spinner {
-            width: 20px; height: 20px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: none;
+            width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -508,12 +325,10 @@
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
             background: rgba(30, 30, 30, 0.9); color: white;
             padding: 10px 20px; border-radius: 20px; font-size: 13px;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: max-content;
-            white-space: nowrap;
+            opacity: 0; pointer-events: none; transition: 0.3s;
+            z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: max-content; white-space: nowrap;
         }
         .toast.show { opacity: 1; }
-
     </style>
 </head>
 <body>
@@ -525,16 +340,14 @@
     </header>
 
     <div class="main-container">
-        <!-- Upload View -->
         <div id="uploadView" class="view active">
             <div class="card upload-area" id="dropZone">
                 <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                 <div class="upload-text">画像を選択</div>
-                <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp, image/heic, image/heif">
+                <input type="file" id="fileInput" accept="image/*">
             </div>
         </div>
 
-        <!-- Editor View -->
         <div id="editorView" class="view hidden">
             <div class="preview-area">
                 <img id="previewImage" src="" alt="">
@@ -542,7 +355,6 @@
             </div>
 
             <div class="controls-sheet">
-                <!-- Dimensions -->
                 <div class="row">
                     <div class="col">
                         <label class="label">横幅 (Width)</label>
@@ -551,11 +363,7 @@
                             <span class="unit">px</span>
                         </div>
                     </div>
-                    
-                    <button class="swap-btn" id="swapBtn" title="数値を入れ替え">
-                        <i class="fa-solid fa-right-left"></i>
-                    </button>
-
+                    <button class="swap-btn" id="swapBtn"><i class="fa-solid fa-right-left"></i></button>
                     <div class="col">
                         <label class="label">縦幅 (Height)</label>
                         <div class="input-group">
@@ -565,25 +373,21 @@
                     </div>
                 </div>
 
-                <!-- Aspect Ratio Checkbox -->
                 <label class="checkbox-wrapper">
                     <input type="checkbox" id="aspectRatioCheck" checked>
                     <div class="checkbox-custom"><i class="fa-solid fa-check"></i></div>
                     <span>縦横比を維持</span>
                 </label>
 
-                <!-- Presets -->
                 <div>
                     <div class="preset-header">
                         <label class="label">プリセット (長押しで削除)</label>
                     </div>
                     <div class="presets-container" id="presetContainer">
-                        <!-- Dynamic Buttons Here -->
                         <button class="preset-btn add-btn" id="addPresetBtn"><i class="fa-solid fa-plus"></i></button>
                     </div>
                 </div>
 
-                <!-- Format -->
                 <div class="row" style="align-items: center;">
                     <div class="col">
                         <label class="label">拡張子</label>
@@ -601,13 +405,11 @@
                     </div>
                 </div>
 
-                <!-- Main Button -->
                 <button class="action-btn" id="convertBtn">
                     <div class="spinner" id="btnSpinner"></div>
                     <span id="btnText"><i class="fa-solid fa-wand-magic-sparkles"></i> 変換</span>
                 </button>
                 
-                <!-- Reset Button -->
                 <button class="reset-btn" id="resetBtn">
                     <i class="fa-solid fa-arrow-rotate-left"></i> 画像を変更
                 </button>
@@ -615,24 +417,21 @@
         </div>
     </div>
 
-    <!-- Image Modal -->
+    <!-- Modals -->
     <div class="modal" id="imageModal">
         <button class="close-modal" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
         <img id="modalImage" src="" alt="">
     </div>
 
-    <!-- Preset Creation Modal -->
     <div class="modal" id="presetModal">
         <div class="modal-content">
             <div class="modal-title">プリセット作成</div>
-            
             <div>
                 <label class="label">名称 (例: 320w)</label>
                 <div class="input-group">
                     <input type="text" id="newPresetName" placeholder="名前">
                 </div>
             </div>
-
             <div>
                 <label class="label">サイズ指定</label>
                 <div class="select-wrapper">
@@ -644,7 +443,6 @@
                     <i class="fa-solid fa-chevron-down select-arrow"></i>
                 </div>
             </div>
-
             <div class="row" id="presetInputRow">
                 <div class="col">
                     <label class="label">値 (px)</label>
@@ -653,7 +451,6 @@
                     </div>
                 </div>
             </div>
-            
             <div class="row" id="presetFixedRow" style="display:none;">
                 <div class="col">
                     <label class="label">横 (W)</label>
@@ -668,7 +465,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="modal-actions">
                 <button class="action-btn cancel-btn" id="closePresetModal">キャンセル</button>
                 <button class="action-btn" id="savePresetBtn">保存</button>
@@ -687,13 +483,11 @@
     const editorView = document.getElementById('editorView');
     const previewImage = document.getElementById('previewImage');
     const fileInfoOverlay = document.getElementById('fileInfoOverlay');
-    
     const widthInput = document.getElementById('widthInput');
     const heightInput = document.getElementById('heightInput');
     const swapBtn = document.getElementById('swapBtn');
     const aspectRatioCheck = document.getElementById('aspectRatioCheck');
     const formatSelect = document.getElementById('formatSelect');
-    
     const convertBtn = document.getElementById('convertBtn');
     const btnSpinner = document.getElementById('btnSpinner');
     const btnText = document.getElementById('btnText');
@@ -701,26 +495,11 @@
     const estimateSize = document.getElementById('estimateSize');
     const toast = document.getElementById('toast');
     const themeToggle = document.getElementById('themeToggle');
-    
-    // Preset Elements
     const presetContainer = document.getElementById('presetContainer');
     const addPresetBtn = document.getElementById('addPresetBtn');
     const presetModal = document.getElementById('presetModal');
-    const newPresetName = document.getElementById('newPresetName');
-    const newPresetMode = document.getElementById('newPresetMode');
-    const newPresetValue = document.getElementById('newPresetValue');
-    const newPresetW = document.getElementById('newPresetW');
-    const newPresetH = document.getElementById('newPresetH');
-    const savePresetBtn = document.getElementById('savePresetBtn');
-    const closePresetModal = document.getElementById('closePresetModal');
-    const presetInputRow = document.getElementById('presetInputRow');
-    const presetFixedRow = document.getElementById('presetFixedRow');
-
-    // Modal Image
-    const modal = document.getElementById('imageModal');
-    const modalImage = document.getElementById('modalImage');
-    const closeModal = document.getElementById('closeModal');
-
+    const imageModal = document.getElementById('imageModal');
+    
     // --- State ---
     let originalImage = null;
     let originalW = 0;
@@ -729,16 +508,9 @@
     let originalSizeStr = "";
     let aspectRatio = 0;
     let presets = [];
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // --- Disable Zoom ---
-    document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && ['+','-','='].includes(e.key)) e.preventDefault();
-    }, { passive: false });
-    document.addEventListener('wheel', (e) => {
-        if (e.ctrlKey || e.metaKey) e.preventDefault();
-    }, { passive: false });
-
-    // --- Theme Logic ---
+    // --- Core Logic ---
     function initTheme() {
         const isDark = localStorage.getItem('theme') === 'dark' || 
                        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -753,131 +525,24 @@
     });
     initTheme();
 
-    // --- Preset Logic ---
-    function loadPresets() {
-        try {
-            const stored = localStorage.getItem('userPresets');
-            if (stored) {
-                presets = JSON.parse(stored);
-            } else {
-                presets = []; 
-            }
-        } catch (e) {
-            presets = [];
-        }
-        renderPresets();
-    }
-
-    function renderPresets() {
-        // Clear buttons except "+"
-        const buttons = presetContainer.querySelectorAll('.preset-btn:not(.add-btn)');
-        buttons.forEach(b => b.remove());
-
-        presets.forEach(p => {
-            const btn = document.createElement('button');
-            btn.className = 'preset-btn';
-            btn.textContent = p.name;
-            
-            btn.addEventListener('click', () => applyPreset(p, btn));
-            
-            // Delete (Long Press)
-            let pressTimer;
-            const startPress = () => { pressTimer = setTimeout(() => deletePreset(p.id), 800); };
-            const cancelPress = () => clearTimeout(pressTimer);
-            
-            btn.addEventListener('touchstart', startPress, {passive: true});
-            btn.addEventListener('touchend', cancelPress);
-            btn.addEventListener('mousedown', startPress);
-            btn.addEventListener('mouseup', cancelPress);
-            btn.addEventListener('mouseleave', cancelPress);
-
-            presetContainer.insertBefore(btn, addPresetBtn);
-        });
-    }
-
-    function applyPreset(p, btnEl) {
-        if (!originalImage) return;
-
-        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-        if (btnEl) btnEl.classList.add('active');
-
-        if (p.mode === 'fixed') {
-            aspectRatioCheck.checked = false;
-            widthInput.value = p.w;
-            heightInput.value = p.h;
-        } else if (p.mode === 'width') {
-            if (!aspectRatioCheck.checked) aspectRatioCheck.checked = true;
-            widthInput.value = p.val;
-            heightInput.value = Math.round(p.val / aspectRatio);
-        } else if (p.mode === 'height') {
-            if (!aspectRatioCheck.checked) aspectRatioCheck.checked = true;
-            heightInput.value = p.val;
-            widthInput.value = Math.round(p.val * aspectRatio);
-        }
-        validate();
-    }
-
-    function deletePreset(id) {
-        if (confirm("このプリセットを削除しますか？")) {
-            presets = presets.filter(p => p.id !== id);
-            localStorage.setItem('userPresets', JSON.stringify(presets));
-            renderPresets();
-            showToast("削除しました");
-        }
-    }
-
-    // --- Preset Creation Modal Logic ---
-    addPresetBtn.addEventListener('click', () => {
-        presetModal.classList.add('open');
-        newPresetName.value = '';
-        newPresetValue.value = '';
-        newPresetW.value = '';
-        newPresetH.value = '';
-    });
-
-    closePresetModal.addEventListener('click', () => {
-        presetModal.classList.remove('open');
-    });
-
-    newPresetMode.addEventListener('change', (e) => {
-        if (e.target.value === 'fixed') {
-            presetInputRow.style.display = 'none';
-            presetFixedRow.style.display = 'flex';
-        } else {
-            presetInputRow.style.display = 'flex';
-            presetFixedRow.style.display = 'none';
-        }
-    });
-
-    savePresetBtn.addEventListener('click', () => {
-        const name = newPresetName.value.trim();
-        const mode = newPresetMode.value;
-        if (!name) return showToast("名前を入力してください");
-
-        const newPreset = { id: Date.now(), name: name, mode: mode };
-
-        if (mode === 'fixed') {
-            const w = parseInt(newPresetW.value);
-            const h = parseInt(newPresetH.value);
-            if (!w || !h) return showToast("サイズを入力してください");
-            newPreset.w = w;
-            newPreset.h = h;
-        } else {
-            const val = parseInt(newPresetValue.value);
-            if (!val) return showToast("値を入力してください");
-            newPreset.val = val;
-        }
-
-        presets.push(newPreset);
-        localStorage.setItem('userPresets', JSON.stringify(presets));
-        renderPresets();
-        presetModal.classList.remove('open');
-        showToast("プリセットを保存しました");
-    });
-
-    loadPresets(); 
+    document.addEventListener('keydown', (e) => { if ((e.ctrlKey||e.metaKey) && ['+','-','='].includes(e.key)) e.preventDefault(); }, {passive:false});
+    document.addEventListener('wheel', (e) => { if (e.ctrlKey||e.metaKey) e.preventDefault(); }, {passive:false});
 
     // --- File Handling ---
+    const handleFile = async (file) => {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'heic' || ext === 'heif' || file.type === 'image/heic') {
+            showToast("HEICを変換中...");
+            try {
+                const blob = await heic2any({ blob: file, toType: "image/jpeg" });
+                loadFile(new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" }));
+            } catch (e) { showToast("HEIC読み込み失敗"); }
+            return;
+        }
+        if (!file.type.startsWith('image/')) return showToast("このファイルは使用できません");
+        loadFile(file);
+    };
+
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('hover'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
@@ -885,32 +550,7 @@
         e.preventDefault(); dropZone.classList.remove('hover');
         if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) handleFile(e.target.files[0]);
-    });
-
-    async function handleFile(file) {
-        const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
-        const ext = file.name.split('.').pop().toLowerCase();
-        
-        if (ext === 'heic' || ext === 'heif' || file.type === 'image/heic' || file.type === 'image/heif') {
-            showToast("HEICを変換中...");
-            try {
-                const blob = await heic2any({ blob: file, toType: "image/jpeg" });
-                const convertedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
-                loadFile(convertedFile);
-            } catch (e) {
-                showToast("HEIC読み込み失敗");
-            }
-            return;
-        }
-
-        if (!validTypes.some(t => file.type === t) && !['png','jpg','jpeg','gif','webp'].includes(ext)) {
-            showToast("このファイルは使用できません");
-            return;
-        }
-        loadFile(file);
-    }
+    fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
 
     function loadFile(file) {
         originalFile = file;
@@ -922,206 +562,195 @@
                 originalW = originalImage.width;
                 originalH = originalImage.height;
                 aspectRatio = originalW / originalH;
-
                 previewImage.src = e.target.result;
-                modalImage.src = e.target.result;
+                document.getElementById('modalImage').src = e.target.result;
                 fileInfoOverlay.textContent = `${originalW}×${originalH} | ${originalSizeStr}`;
-                
                 widthInput.value = originalW;
                 heightInput.value = originalH;
-                
-                validate(); 
-                
-                uploadView.classList.remove('active');
-                uploadView.classList.add('hidden');
-                setTimeout(() => {
-                    editorView.classList.remove('hidden');
-                    editorView.classList.add('active');
-                }, 100);
+                validate();
+                uploadView.classList.remove('active'); uploadView.classList.add('hidden');
+                setTimeout(() => { editorView.classList.remove('hidden'); editorView.classList.add('active'); }, 100);
             };
             originalImage.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
 
-    // --- Core Logic ---
-    function formatBytes(bytes) {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + ['B', 'KB', 'MB'][i];
+    // --- Resize Logic ---
+    function validate() {
+        const w = parseInt(widthInput.value)||0, h = parseInt(heightInput.value)||0;
+        let err = false;
+        if (w<=0) { widthInput.classList.add('error'); err=true; } else widthInput.classList.remove('error');
+        if (h<=0) { heightInput.classList.add('error'); err=true; } else heightInput.classList.remove('error');
+        convertBtn.disabled = err;
+        updateEstimate(err);
+    }
+
+    function updateEstimate(err) {
+        if (err) return estimateSize.textContent = "約 ---.- B";
+        const w = parseInt(widthInput.value)||0, h = parseInt(heightInput.value)||0;
+        let bpp = formatSelect.value==='image/png'?0.9:(formatSelect.value==='image/webp'?0.2:0.25);
+        estimateSize.textContent = `約 ${formatBytes(w*h*bpp)}`;
     }
 
     widthInput.addEventListener('input', () => {
-        if (aspectRatioCheck.checked && widthInput.value) {
-            heightInput.value = Math.round(widthInput.value / aspectRatio);
-        }
+        if (aspectRatioCheck.checked && widthInput.value) heightInput.value = Math.round(widthInput.value / aspectRatio);
         validate();
     });
-
     heightInput.addEventListener('input', () => {
-        if (aspectRatioCheck.checked && heightInput.value) {
-            widthInput.value = Math.round(heightInput.value * aspectRatio);
-        }
+        if (aspectRatioCheck.checked && heightInput.value) widthInput.value = Math.round(heightInput.value * aspectRatio);
         validate();
     });
-
     aspectRatioCheck.addEventListener('change', () => {
-        if (aspectRatioCheck.checked && widthInput.value) {
-            heightInput.value = Math.round(widthInput.value / aspectRatio);
-            validate();
-        }
-    });
-
-    swapBtn.addEventListener('click', () => {
-        const wVal = widthInput.value;
-        const hVal = heightInput.value;
-        widthInput.value = hVal;
-        heightInput.value = wVal;
-        if (aspectRatioCheck.checked && wVal && hVal) aspectRatio = 1 / aspectRatio;
-        
+        if (aspectRatioCheck.checked && widthInput.value) heightInput.value = Math.round(widthInput.value / aspectRatio);
         validate();
-        const icon = swapBtn.querySelector('i');
-        icon.style.transition = 'transform 0.3s';
-        icon.style.transform = 'rotate(180deg)';
-        setTimeout(() => { icon.style.transition='none'; icon.style.transform='rotate(0deg)'; }, 300);
     });
-
+    swapBtn.addEventListener('click', () => {
+        const w = widthInput.value; widthInput.value = heightInput.value; heightInput.value = w;
+        if (aspectRatioCheck.checked && w && heightInput.value) aspectRatio = 1/aspectRatio;
+        validate();
+    });
     formatSelect.addEventListener('change', () => updateEstimate(false));
 
-    function validate() {
-        const w = parseInt(widthInput.value) || 0;
-        const h = parseInt(heightInput.value) || 0;
-        let hasError = false;
-
-        if (w <= 0) { widthInput.classList.add('error'); hasError=true; } else widthInput.classList.remove('error');
-        if (h <= 0) { heightInput.classList.add('error'); hasError=true; } else heightInput.classList.remove('error');
-
-        convertBtn.disabled = hasError;
-        updateEstimate(hasError);
-    }
-
-    function updateEstimate(hasError) {
-        if (hasError) {
-            estimateSize.textContent = "約 ---.- B";
-            return;
-        }
-        const w = parseInt(widthInput.value) || 0;
-        const h = parseInt(heightInput.value) || 0;
-        let bpp = 0.25; 
-        if (formatSelect.value === 'image/png') bpp = 0.9; 
-        else if (formatSelect.value === 'image/webp') bpp = 0.2; 
-        const estBytes = w * h * bpp;
-        estimateSize.textContent = `約 ${formatBytes(estBytes)}`;
-    }
-
-    // --- UI Controls ---
-    previewImage.addEventListener('click', () => modal.classList.add('open'));
-    closeModal.addEventListener('click', () => modal.classList.remove('open'));
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
-    
-    resetBtn.addEventListener('click', () => {
-        editorView.classList.remove('active');
-        editorView.classList.add('hidden');
-        setTimeout(() => {
-            uploadView.classList.remove('hidden');
-            uploadView.classList.add('active');
-            fileInput.value = '';
-            originalImage = null;
-            previewImage.src = '';
-        }, 300);
-    });
-
-    // --- Export Logic ---
+    // --- Convert Logic (Fixed) ---
     convertBtn.addEventListener('click', async () => {
-        if (convertBtn.disabled) return;
-        if (!originalImage) return;
+        if (convertBtn.disabled || !originalImage) return;
+        
         setLoading(true);
+        // Wait for UI to update
+        await new Promise(r => setTimeout(r, 50));
 
-        setTimeout(() => {
+        try {
             const w = parseInt(widthInput.value);
             const h = parseInt(heightInput.value);
-            const format = formatSelect.value;
-            
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
+            if (!w || !h) throw new Error("無効なサイズです");
 
-                if (format === 'image/jpeg') {
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, w, h);
-                } else {
-                    ctx.clearRect(0, 0, w, h);
-                }
-
-                ctx.drawImage(originalImage, 0, 0, w, h);
-
-                canvas.toBlob(async (blob) => {
-                    if (!blob) {
-                        showToast("エラー発生");
-                        setLoading(false);
-                        return;
-                    }
-                    const extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
-                    const outExt = extMap[format];
-                    const originalBase = originalFile.name.substring(0, originalFile.name.lastIndexOf('.')) || originalFile.name;
-                    const fileName = `${originalBase}_${w}x${h}.${outExt}`;
-                    const file = new File([blob], fileName, { type: format });
-
-                    // Try Share, fallback to Download
-                    let shared = false;
-                    if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
-                        try {
-                            await navigator.share({ files: [file], title: 'リサイズ画像' });
-                            shared = true;
-                        } catch (err) {
-                            // User cancelled or failed
-                        }
-                    } 
+            const blob = await new Promise((resolve, reject) => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
                     
-                    if (!shared) {
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = fileName;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                        showToast("ダウンロードしました");
+                    if (formatSelect.value === 'image/jpeg') {
+                        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, w, h);
+                    } else {
+                        ctx.clearRect(0, 0, w, h);
                     }
-                    setLoading(false);
-                }, format, 0.92);
-            } catch (e) {
-                console.error(e);
-                showToast("変換エラー");
-                setLoading(false);
+                    ctx.drawImage(originalImage, 0, 0, w, h);
+                    
+                    canvas.toBlob((b) => {
+                        if (b) resolve(b); else reject(new Error("変換に失敗しました"));
+                    }, formatSelect.value, 0.92);
+                } catch (e) { reject(e); }
+            });
+
+            const ext = formatSelect.value==='image/png'?'png':(formatSelect.value==='image/webp'?'webp':'jpg');
+            const fileName = `${originalFile.name.split('.')[0]}_${w}x${h}.${ext}`;
+            const file = new File([blob], fileName, { type: formatSelect.value });
+
+            let shared = false;
+            // Try Share API (Mobile only)
+            if (isMobile && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: 'リサイズ画像' });
+                    shared = true;
+                } catch (err) {
+                    if (err.name === 'AbortError') shared = true; // Treated as handled
+                }
             }
-        }, 100);
+
+            if (!shared) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = fileName;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast("ダウンロードしました");
+            }
+        } catch (e) {
+            console.error(e);
+            showToast("エラーが発生しました: " + e.message);
+        } finally {
+            setLoading(false);
+        }
     });
 
-    function setLoading(isLoading) {
-        if (isLoading) {
-            btnSpinner.style.display = 'block';
-            document.querySelector('#btnText .fa-wand-magic-sparkles').style.display = 'none';
-            convertBtn.disabled = true;
+    // --- Presets ---
+    function loadPresets() {
+        try { presets = JSON.parse(localStorage.getItem('userPresets') || '[]'); } catch(e){ presets=[]; }
+        renderPresets();
+    }
+    function renderPresets() {
+        presetContainer.querySelectorAll('.preset-btn:not(.add-btn)').forEach(b=>b.remove());
+        presets.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'preset-btn'; btn.textContent = p.name;
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                if(p.mode==='fixed'){ aspectRatioCheck.checked=false; widthInput.value=p.w; heightInput.value=p.h; }
+                else if(p.mode==='width'){ if(!aspectRatioCheck.checked) aspectRatioCheck.checked=true; widthInput.value=p.val; heightInput.value=Math.round(p.val/aspectRatio); }
+                else { if(!aspectRatioCheck.checked) aspectRatioCheck.checked=true; heightInput.value=p.val; widthInput.value=Math.round(p.val*aspectRatio); }
+                validate();
+            });
+            // Delete logic
+            let timer;
+            const start = () => timer = setTimeout(() => {
+                if(confirm('削除しますか？')){ presets=presets.filter(i=>i.id!==p.id); localStorage.setItem('userPresets',JSON.stringify(presets)); renderPresets(); }
+            }, 800);
+            btn.addEventListener('touchstart', start, {passive:true});
+            btn.addEventListener('touchend', ()=>clearTimeout(timer));
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', ()=>clearTimeout(timer));
+            btn.addEventListener('mouseleave', ()=>clearTimeout(timer));
+            presetContainer.insertBefore(btn, addPresetBtn);
+        });
+    }
+    loadPresets();
+
+    // --- UI Helpers ---
+    function formatBytes(b) { if(b===0)return'0 B'; const k=1024, i=Math.floor(Math.log(b)/Math.log(k)); return parseFloat((b/Math.pow(k,i)).toFixed(1))+' '+['B','KB','MB'][i]; }
+    function setLoading(b) { if(b){btnSpinner.style.display='block';btnText.style.display='none';convertBtn.disabled=true;}else{btnSpinner.style.display='none';btnText.style.display='inline-block';convertBtn.disabled=false;} }
+    function showToast(m) { toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),3000); }
+    
+    // Modal & Reset
+    previewImage.addEventListener('click', () => imageModal.classList.add('open'));
+    imageModal.querySelector('.close-modal').addEventListener('click', () => imageModal.classList.remove('open'));
+    resetBtn.addEventListener('click', () => {
+        editorView.classList.remove('active'); editorView.classList.add('hidden');
+        setTimeout(() => { uploadView.classList.remove('hidden'); uploadView.classList.add('active'); fileInput.value=''; originalImage=null; }, 300);
+    });
+
+    // Preset Modal
+    addPresetBtn.addEventListener('click', () => { 
+        presetModal.classList.add('open'); 
+        document.getElementById('newPresetName').value = ''; 
+        document.getElementById('newPresetValue').value = ''; 
+    });
+    document.getElementById('closePresetModal').addEventListener('click', () => presetModal.classList.remove('open'));
+    document.getElementById('newPresetMode').addEventListener('change', (e) => {
+        document.getElementById('presetInputRow').style.display = e.target.value==='fixed'?'none':'flex';
+        document.getElementById('presetFixedRow').style.display = e.target.value==='fixed'?'flex':'none';
+    });
+    document.getElementById('savePresetBtn').addEventListener('click', () => {
+        const name = document.getElementById('newPresetName').value.trim();
+        if(!name) return showToast("名前を入力してください");
+        const mode = document.getElementById('newPresetMode').value;
+        const p = { id:Date.now(), name, mode };
+        if(mode==='fixed'){
+            p.w = parseInt(document.getElementById('newPresetW').value);
+            p.h = parseInt(document.getElementById('newPresetH').value);
+            if(!p.w || !p.h) return showToast("値を入力してください");
         } else {
-            btnSpinner.style.display = 'none';
-            document.querySelector('#btnText .fa-wand-magic-sparkles').style.display = 'inline-block';
-            convertBtn.disabled = false;
+            p.val = parseInt(document.getElementById('newPresetValue').value);
+            if(!p.val) return showToast("値を入力してください");
         }
-    }
-
-    function showToast(msg) {
-        toast.textContent = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
+        presets.push(p);
+        localStorage.setItem('userPresets', JSON.stringify(presets));
+        renderPresets();
+        presetModal.classList.remove('open');
+    });
 </script>
-
 </body>
 </html>
