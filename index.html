@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Resizer</title>
     
-    <!-- PWA Settings -->
+    <!-- PWA Settings (iOS) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Resizer">
+    <!-- Icon updated to pwaicon.jpg -->
     <link rel="apple-touch-icon" href="pwaicon.jpg">
     <link rel="icon" href="pwaicon.jpg">
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiUmVzaXplciIsInNob3J0X25hbWUiOiJSZXNpemVyIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiNmZmZmZmYiLCJpY29ucyI6W3sic3JjIjoiaWNvbl81MTJ4NTEyLmpwZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9qcGVnIn1dfQ==">
+
+    <!-- PWA Settings (Android/Manifest) - Updated src to pwaicon.jpg -->
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiUmVzaXplciIsInNob3J0X25hbWUiOiJSZXNpemVyIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiNmZmZmZmYiLCJpY29ucyI6W3sic3JjIjoicHdhaWNvbi5qcGciLCJzaXplcyI6IjUxMng1MTIiLCJ0eXBlIjoiaW1hZ2UvanBlZyJ9XX0=">
 
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
@@ -19,6 +22,7 @@
 
     <style>
         :root {
+            /* Light Mode */
             --bg-color: #FFFFFF;
             --surface-color: #FFFFFF;
             --sheet-bg: rgba(255, 255, 255, 0.95);
@@ -34,6 +38,7 @@
             --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --transition-speed: 0.3s;
             
+            /* Checkerboard for transparency */
             --checker-c1: #ffffff;
             --checker-c2: #e0e0e0;
         }
@@ -96,12 +101,19 @@
             transition: background-color var(--transition-speed) ease;
         }
         h1 { font-size: 18px; margin: 0; font-weight: 700; }
-        .theme-toggle {
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-btn {
             background: none; border: none; cursor: pointer;
-            color: var(--text-color); font-size: 18px; padding: 8px;
+            color: var(--text-color); font-size: 18px; padding: 4px;
+            transition: color 0.3s;
         }
 
-        /* Main Container */
+        /* Container for Views */
         .main-container {
             position: relative;
             flex: 1;
@@ -140,7 +152,7 @@
             text-align: center;
             background: var(--surface-color);
             cursor: pointer;
-            transition: 0.2s;
+            transition: border-color 0.2s, background-color 0.2s;
         }
         .upload-area:active { background: rgba(0,122,255,0.05); border-color: var(--accent-color); }
         .upload-icon { font-size: 48px; margin-bottom: 16px; color: var(--accent-color); }
@@ -162,7 +174,6 @@
             padding: 20px;
             overflow: hidden;
             position: relative;
-            /* Checkerboard */
             background-image: linear-gradient(45deg, var(--checker-c2) 25%, transparent 25%), linear-gradient(-45deg, var(--checker-c2) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--checker-c2) 75%), linear-gradient(-45deg, transparent 75%, var(--checker-c2) 75%);
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
@@ -252,8 +263,7 @@
         }
         .preset-btn {
             background: var(--input-bg); border: 1px solid var(--input-border);
-            border-radius: 10px; padding: 0; /* Remove default padding to rely on height/flex */
-            height: 44px; /* Fixed height for uniformity */
+            border-radius: 10px; padding: 0; height: 44px;
             font-size: 12px; font-weight: 500; color: var(--text-color);
             cursor: pointer; transition: 0.2s; position: relative;
             display: flex; align-items: center; justify-content: center;
@@ -336,14 +346,17 @@
 <div id="app-frame">
     <header>
         <h1>Resizer</h1>
-        <button class="theme-toggle" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
+        <div class="header-controls">
+            <button class="header-btn" id="langToggle"><i class="fa-solid fa-globe"></i></button>
+            <button class="header-btn" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
+        </div>
     </header>
 
     <div class="main-container">
         <div id="uploadView" class="view active">
             <div class="card upload-area" id="dropZone">
                 <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                <div class="upload-text">画像を選択</div>
+                <div class="upload-text" data-i18n="selectImage">画像を選択</div>
                 <input type="file" id="fileInput" accept="image/*">
             </div>
         </div>
@@ -357,7 +370,7 @@
             <div class="controls-sheet">
                 <div class="row">
                     <div class="col">
-                        <label class="label">横幅 (Width)</label>
+                        <label class="label" data-i18n="width">横幅 (WIDTH)</label>
                         <div class="input-group">
                             <input type="number" id="widthInput" placeholder="0">
                             <span class="unit">px</span>
@@ -365,7 +378,7 @@
                     </div>
                     <button class="swap-btn" id="swapBtn"><i class="fa-solid fa-right-left"></i></button>
                     <div class="col">
-                        <label class="label">縦幅 (Height)</label>
+                        <label class="label" data-i18n="height">縦幅 (HEIGHT)</label>
                         <div class="input-group">
                             <input type="number" id="heightInput" placeholder="0">
                             <span class="unit">px</span>
@@ -376,12 +389,12 @@
                 <label class="checkbox-wrapper">
                     <input type="checkbox" id="aspectRatioCheck" checked>
                     <div class="checkbox-custom"><i class="fa-solid fa-check"></i></div>
-                    <span>縦横比を維持</span>
+                    <span data-i18n="maintainRatio">縦横比を維持</span>
                 </label>
 
                 <div>
                     <div class="preset-header">
-                        <label class="label">プリセット (長押しで削除)</label>
+                        <label class="label" data-i18n="preset">プリセット (長押しで削除)</label>
                     </div>
                     <div class="presets-container" id="presetContainer">
                         <button class="preset-btn add-btn" id="addPresetBtn"><i class="fa-solid fa-plus"></i></button>
@@ -390,7 +403,7 @@
 
                 <div class="row" style="align-items: center;">
                     <div class="col">
-                        <label class="label">拡張子</label>
+                        <label class="label" data-i18n="format">拡張子</label>
                         <div class="select-wrapper">
                             <select id="formatSelect">
                                 <option value="image/jpeg">JPG</option>
@@ -401,17 +414,17 @@
                         </div>
                     </div>
                     <div class="col" style="display:flex; align-items:flex-end;">
-                         <div class="estimate" id="estimateSize">約 ---.- B</div>
+                         <div class="estimate" id="estimateSize"></div>
                     </div>
                 </div>
 
                 <button class="action-btn" id="convertBtn">
                     <div class="spinner" id="btnSpinner"></div>
-                    <span id="btnText"><i class="fa-solid fa-wand-magic-sparkles"></i> 変換</span>
+                    <span id="btnText"><i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="convert">変換</span></span>
                 </button>
                 
                 <button class="reset-btn" id="resetBtn">
-                    <i class="fa-solid fa-arrow-rotate-left"></i> 画像を変更
+                    <i class="fa-solid fa-arrow-rotate-left"></i> <span data-i18n="changeImage">画像を変更</span>
                 </button>
             </div>
         </div>
@@ -425,27 +438,27 @@
 
     <div class="modal" id="presetModal">
         <div class="modal-content">
-            <div class="modal-title">プリセット作成</div>
+            <div class="modal-title" data-i18n="createPreset">プリセット作成</div>
             <div>
-                <label class="label">名称 (例: 320w)</label>
+                <label class="label" data-i18n="presetName">名称 (例: 320w)</label>
                 <div class="input-group">
-                    <input type="text" id="newPresetName" placeholder="名前">
+                    <input type="text" id="newPresetName">
                 </div>
             </div>
             <div>
-                <label class="label">サイズ指定</label>
+                <label class="label" data-i18n="sizeMode">サイズ指定</label>
                 <div class="select-wrapper">
                     <select id="newPresetMode">
-                        <option value="width">横幅のみ指定 (比率維持)</option>
-                        <option value="height">縦幅のみ指定 (比率維持)</option>
-                        <option value="fixed">縦横固定 (比率無視)</option>
+                        <option value="width" data-i18n="widthOnly">横幅のみ指定 (比率維持)</option>
+                        <option value="height" data-i18n="heightOnly">縦幅のみ指定 (比率維持)</option>
+                        <option value="fixed" data-i18n="fixedSize">縦横固定 (比率無視)</option>
                     </select>
                     <i class="fa-solid fa-chevron-down select-arrow"></i>
                 </div>
             </div>
             <div class="row" id="presetInputRow">
                 <div class="col">
-                    <label class="label">値 (px)</label>
+                    <label class="label" data-i18n="valuePx">値 (px)</label>
                     <div class="input-group">
                         <input type="number" id="newPresetValue" placeholder="320">
                     </div>
@@ -453,21 +466,21 @@
             </div>
             <div class="row" id="presetFixedRow" style="display:none;">
                 <div class="col">
-                    <label class="label">横 (W)</label>
+                    <label class="label">W</label>
                     <div class="input-group">
                         <input type="number" id="newPresetW" placeholder="1920">
                     </div>
                 </div>
                 <div class="col">
-                    <label class="label">縦 (H)</label>
+                    <label class="label">H</label>
                     <div class="input-group">
                         <input type="number" id="newPresetH" placeholder="1080">
                     </div>
                 </div>
             </div>
             <div class="modal-actions">
-                <button class="action-btn cancel-btn" id="closePresetModal">キャンセル</button>
-                <button class="action-btn" id="savePresetBtn">保存</button>
+                <button class="action-btn cancel-btn" id="closePresetModal" data-i18n="cancel">キャンセル</button>
+                <button class="action-btn" id="savePresetBtn" data-i18n="save">保存</button>
             </div>
         </div>
     </div>
@@ -476,6 +489,78 @@
 </div>
 
 <script>
+    // --- Translations ---
+    const translations = {
+        ja: {
+            title: "Resizer",
+            selectImage: "画像を選択",
+            width: "横幅 (WIDTH)",
+            height: "縦幅 (HEIGHT)",
+            maintainRatio: "縦横比を維持",
+            preset: "プリセット (長押しで削除)",
+            format: "拡張子",
+            convert: "変換",
+            changeImage: "画像を変更",
+            createPreset: "プリセット作成",
+            presetName: "名称 (例: 320w)",
+            sizeMode: "サイズ指定",
+            widthOnly: "横幅のみ指定 (比率維持)",
+            heightOnly: "縦幅のみ指定 (比率維持)",
+            fixedSize: "縦横固定 (比率無視)",
+            valuePx: "値 (px)",
+            cancel: "キャンセル",
+            save: "保存",
+            toastHEIC: "HEICを変換中...",
+            toastHEICFail: "HEIC読み込み失敗",
+            toastInvalid: "このファイルは使用できません",
+            toastDelConfirm: "このプリセットを削除しますか？",
+            toastDeleted: "削除しました",
+            toastEnterName: "名前を入力してください",
+            toastEnterSize: "サイズを入力してください",
+            toastEnterVal: "値を入力してください",
+            toastSaved: "プリセットを保存しました",
+            toastError: "エラーが発生しました",
+            toastConvertFail: "変換に失敗しました",
+            toastDownload: "ダウンロードしました",
+            estimate: "約"
+        },
+        en: {
+            title: "Resizer",
+            selectImage: "Select Image",
+            width: "Width",
+            height: "Height",
+            maintainRatio: "Maintain Aspect Ratio",
+            preset: "Presets (Long press to delete)",
+            format: "Format",
+            convert: "Convert",
+            changeImage: "Change Image",
+            createPreset: "Create Preset",
+            presetName: "Name (e.g. 320w)",
+            sizeMode: "Resize Mode",
+            widthOnly: "Width Only (Keep Ratio)",
+            heightOnly: "Height Only (Keep Ratio)",
+            fixedSize: "Fixed Size (Ignore Ratio)",
+            valuePx: "Value (px)",
+            cancel: "Cancel",
+            save: "Save",
+            toastHEIC: "Converting HEIC...",
+            toastHEICFail: "Failed to load HEIC",
+            toastInvalid: "Invalid file type",
+            toastDelConfirm: "Delete this preset?",
+            toastDeleted: "Deleted",
+            toastEnterName: "Please enter a name",
+            toastEnterSize: "Please enter dimensions",
+            toastEnterVal: "Please enter a value",
+            toastSaved: "Preset saved",
+            toastError: "An error occurred",
+            toastConvertFail: "Conversion failed",
+            toastDownload: "Downloaded",
+            estimate: "Est."
+        }
+    };
+
+    let currentLang = localStorage.getItem('lang') || 'ja';
+
     // --- Elements ---
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -495,6 +580,7 @@
     const estimateSize = document.getElementById('estimateSize');
     const toast = document.getElementById('toast');
     const themeToggle = document.getElementById('themeToggle');
+    const langToggle = document.getElementById('langToggle');
     const presetContainer = document.getElementById('presetContainer');
     const addPresetBtn = document.getElementById('addPresetBtn');
     const presetModal = document.getElementById('presetModal');
@@ -509,6 +595,25 @@
     let aspectRatio = 0;
     let presets = [];
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // --- i18n Logic ---
+    function t(key) { return translations[currentLang][key] || key; }
+    
+    function updateLanguage() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.textContent = translations[currentLang][el.getAttribute('data-i18n')];
+        });
+        document.querySelector('h1').textContent = translations[currentLang].title;
+        document.getElementById('newPresetName').placeholder = translations[currentLang].presetName;
+        updateEstimate(false);
+    }
+
+    langToggle.addEventListener('click', () => {
+        currentLang = currentLang === 'ja' ? 'en' : 'ja';
+        localStorage.setItem('lang', currentLang);
+        updateLanguage();
+    });
+    updateLanguage();
 
     // --- Core Logic ---
     function initTheme() {
@@ -532,14 +637,14 @@
     const handleFile = async (file) => {
         const ext = file.name.split('.').pop().toLowerCase();
         if (ext === 'heic' || ext === 'heif' || file.type === 'image/heic') {
-            showToast("HEICを変換中...");
+            showToast(t('toastHEIC'));
             try {
                 const blob = await heic2any({ blob: file, toType: "image/jpeg" });
                 loadFile(new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" }));
-            } catch (e) { showToast("HEIC読み込み失敗"); }
+            } catch (e) { showToast(t('toastHEICFail')); }
             return;
         }
-        if (!file.type.startsWith('image/')) return showToast("このファイルは使用できません");
+        if (!file.type.startsWith('image/')) return showToast(t('toastInvalid'));
         loadFile(file);
     };
 
@@ -587,10 +692,10 @@
     }
 
     function updateEstimate(err) {
-        if (err) return estimateSize.textContent = "約 ---.- B";
+        if (err) return estimateSize.textContent = `${t('estimate')} ---.- B`;
         const w = parseInt(widthInput.value)||0, h = parseInt(heightInput.value)||0;
         let bpp = formatSelect.value==='image/png'?0.9:(formatSelect.value==='image/webp'?0.2:0.25);
-        estimateSize.textContent = `約 ${formatBytes(w*h*bpp)}`;
+        estimateSize.textContent = `${t('estimate')} ${formatBytes(w*h*bpp)}`;
     }
 
     widthInput.addEventListener('input', () => {
@@ -617,13 +722,12 @@
         if (convertBtn.disabled || !originalImage) return;
         
         setLoading(true);
-        // Wait for UI to update
         await new Promise(r => setTimeout(r, 50));
 
         try {
             const w = parseInt(widthInput.value);
             const h = parseInt(heightInput.value);
-            if (!w || !h) throw new Error("無効なサイズです");
+            if (!w || !h) throw new Error("Invalid Size");
 
             const blob = await new Promise((resolve, reject) => {
                 try {
@@ -640,7 +744,7 @@
                     ctx.drawImage(originalImage, 0, 0, w, h);
                     
                     canvas.toBlob((b) => {
-                        if (b) resolve(b); else reject(new Error("変換に失敗しました"));
+                        if (b) resolve(b); else reject(new Error(t('toastConvertFail')));
                     }, formatSelect.value, 0.92);
                 } catch (e) { reject(e); }
             });
@@ -650,13 +754,12 @@
             const file = new File([blob], fileName, { type: formatSelect.value });
 
             let shared = false;
-            // Try Share API (Mobile only)
             if (isMobile && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
-                    await navigator.share({ files: [file], title: 'リサイズ画像' });
+                    await navigator.share({ files: [file], title: t('title') });
                     shared = true;
                 } catch (err) {
-                    if (err.name === 'AbortError') shared = true; // Treated as handled
+                    if (err.name === 'AbortError') shared = true; 
                 }
             }
 
@@ -666,11 +769,11 @@
                 a.href = url; a.download = fileName;
                 document.body.appendChild(a); a.click(); document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                showToast("ダウンロードしました");
+                showToast(t('toastDownload'));
             }
         } catch (e) {
             console.error(e);
-            showToast("エラーが発生しました: " + e.message);
+            showToast(`${t('toastError')}: ${e.message}`);
         } finally {
             setLoading(false);
         }
@@ -694,10 +797,9 @@
                 else { if(!aspectRatioCheck.checked) aspectRatioCheck.checked=true; heightInput.value=p.val; widthInput.value=Math.round(p.val*aspectRatio); }
                 validate();
             });
-            // Delete logic
             let timer;
             const start = () => timer = setTimeout(() => {
-                if(confirm('削除しますか？')){ presets=presets.filter(i=>i.id!==p.id); localStorage.setItem('userPresets',JSON.stringify(presets)); renderPresets(); }
+                if(confirm(t('toastDelConfirm'))){ presets=presets.filter(i=>i.id!==p.id); localStorage.setItem('userPresets',JSON.stringify(presets)); renderPresets(); showToast(t('toastDeleted')); }
             }, 800);
             btn.addEventListener('touchstart', start, {passive:true});
             btn.addEventListener('touchend', ()=>clearTimeout(timer));
@@ -735,21 +837,22 @@
     });
     document.getElementById('savePresetBtn').addEventListener('click', () => {
         const name = document.getElementById('newPresetName').value.trim();
-        if(!name) return showToast("名前を入力してください");
+        if(!name) return showToast(t('toastEnterName'));
         const mode = document.getElementById('newPresetMode').value;
         const p = { id:Date.now(), name, mode };
         if(mode==='fixed'){
             p.w = parseInt(document.getElementById('newPresetW').value);
             p.h = parseInt(document.getElementById('newPresetH').value);
-            if(!p.w || !p.h) return showToast("値を入力してください");
+            if(!p.w || !p.h) return showToast(t('toastEnterSize'));
         } else {
             p.val = parseInt(document.getElementById('newPresetValue').value);
-            if(!p.val) return showToast("値を入力してください");
+            if(!p.val) return showToast(t('toastEnterVal'));
         }
         presets.push(p);
         localStorage.setItem('userPresets', JSON.stringify(presets));
         renderPresets();
         presetModal.classList.remove('open');
+        showToast(t('toastSaved'));
     });
 </script>
 </body>
