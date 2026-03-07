@@ -9,8 +9,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Resizer">
-    <link rel="apple-touch-icon" href="pwaicon.jpg">
-    <link rel="icon" href="pwaicon.jpg">
+    <link rel="apple-touch-icon" href="icon_512x512.jpg">
+    <link rel="icon" href="icon_512x512.jpg">
 
     <!-- PWA Settings (Android/Manifest) -->
     <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiUmVzaXplciIsInNob3J0X25hbWUiOiJSZXNpemVyIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiNmZmZmZmYiLCJpY29ucyI6W3sic3JjIjoiaWNvbl81MTJ4NTEyLmpwZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9qcGVnIn1dfQ==">
@@ -24,13 +24,13 @@
             /* Light Mode */
             --bg-color: #FFFFFF;
             --surface-color: #FFFFFF;
-            --sheet-bg: rgba(255, 255, 255, 0.98);
+            --sheet-bg: rgba(255, 255, 255, 0.95);
             --text-color: #000000;
             --secondary-text: #8E8E93;
             --accent-color: #007AFF;
             --danger-color: #FF3B30;
             --border-color: #E5E5EA;
-            --input-bg: #F5F5F7;
+            --input-bg: #F2F2F7;
             --input-border: #E5E5EA;
             --active-border: #000000;
             --shadow: 0 4px 20px rgba(0,0,0,0.08);
@@ -46,7 +46,7 @@
         [data-theme="dark"] {
             --bg-color: #000000;
             --surface-color: #1C1C1E;
-            --sheet-bg: rgba(28, 28, 30, 0.98);
+            --sheet-bg: rgba(28, 28, 30, 0.95);
             --text-color: #FFFFFF;
             --secondary-text: #98989D;
             --accent-color: #0A84FF;
@@ -356,17 +356,16 @@
             color: var(--secondary-text); pointer-events: none; font-size: 12px;
         }
 
-        /* Presets */
+        /* Presets (修正: CSS Gridで固定サイズ配置) */
         .preset-header {
             display: flex;
             align-items: center;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .presets-container {
-            display: flex; 
-            gap: 8px; 
-            flex-wrap: wrap;
-            justify-content: flex-start;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 常に4列 */
+            gap: 8px;
             padding: 4px;
             margin: 0 -4px;
             width: calc(100% + 8px);
@@ -375,23 +374,25 @@
             background: var(--input-bg);
             border: 1px solid var(--input-border);
             border-radius: 10px;
-            padding: 10px 8px;
-            font-size: 13px;
+            padding: 12px 2px; /* 上下パディングを確保、左右は狭く */
+            font-size: 12px; /* 少し小さくして収まりよくする */
             font-weight: 500;
             color: var(--text-color);
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* はみ出し対策 */
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
             position: relative;
-            flex: 1 1 auto;
-            min-width: 60px;
+            /* サイズ固定設定 */
+            width: 100%; 
+            min-width: 0;
         }
         .preset-btn.add-btn {
-            flex: 0 0 auto;
             color: var(--accent-color);
             font-weight: bold;
-            min-width: 44px;
+            font-size: 14px;
         }
         .preset-btn.active { 
             border: 2px solid var(--active-border); 
@@ -752,24 +753,23 @@
     });
     initTheme();
 
-    // --- Preset Logic (Load/Save/Render) ---
+    // --- Preset Logic ---
     function loadPresets() {
         try {
             const stored = localStorage.getItem('userPresets');
             if (stored) {
                 presets = JSON.parse(stored);
             } else {
-                presets = []; // Empty by default as requested
+                presets = []; 
             }
         } catch (e) {
-            console.error("Preset load error", e);
             presets = [];
         }
         renderPresets();
     }
 
     function renderPresets() {
-        // Clear buttons except the "+" button
+        // Clear buttons except "+"
         const buttons = presetContainer.querySelectorAll('.preset-btn:not(.add-btn)');
         buttons.forEach(b => b.remove());
 
@@ -854,11 +854,7 @@
         const mode = newPresetMode.value;
         if (!name) return showToast("名前を入力してください");
 
-        const newPreset = {
-            id: Date.now(),
-            name: name,
-            mode: mode
-        };
+        const newPreset = { id: Date.now(), name: name, mode: mode };
 
         if (mode === 'fixed') {
             const w = parseInt(newPresetW.value);
@@ -879,7 +875,6 @@
         showToast("プリセットを保存しました");
     });
 
-    // Init presets
     loadPresets(); 
 
     // --- File Handling ---
@@ -905,7 +900,6 @@
                 const convertedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
                 loadFile(convertedFile);
             } catch (e) {
-                console.error(e);
                 showToast("HEIC読み込み失敗");
             }
             return;
@@ -938,7 +932,6 @@
                 
                 validate(); 
                 
-                // Show Editor (Animation)
                 uploadView.classList.remove('active');
                 uploadView.classList.add('hidden');
                 setTimeout(() => {
@@ -1022,7 +1015,7 @@
         estimateSize.textContent = `約 ${formatBytes(estBytes)}`;
     }
 
-    // --- View/Modal Controls ---
+    // --- UI Controls ---
     previewImage.addEventListener('click', () => modal.classList.add('open'));
     closeModal.addEventListener('click', () => modal.classList.remove('open'));
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
@@ -1039,9 +1032,10 @@
         }, 300);
     });
 
-    // --- Convert & Export ---
+    // --- Export Logic ---
     convertBtn.addEventListener('click', async () => {
         if (convertBtn.disabled) return;
+        if (!originalImage) return;
         setLoading(true);
 
         setTimeout(() => {
@@ -1057,12 +1051,10 @@
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
 
-                // Handle Transparency: Fill white ONLY for JPEG
                 if (format === 'image/jpeg') {
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, w, h);
                 } else {
-                    // For PNG/WebP, canvas is transparent by default, but clear just in case
                     ctx.clearRect(0, 0, w, h);
                 }
 
@@ -1080,11 +1072,18 @@
                     const fileName = `${originalBase}_${w}x${h}.${outExt}`;
                     const file = new File([blob], fileName, { type: format });
 
+                    // Try Share, fallback to Download
+                    let shared = false;
                     if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({ files: [file], title: 'リサイズ画像' });
-                        } catch (err) {}
-                    } else {
+                            shared = true;
+                        } catch (err) {
+                            // User cancelled or failed
+                        }
+                    } 
+                    
+                    if (!shared) {
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
